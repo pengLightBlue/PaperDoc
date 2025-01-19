@@ -12,7 +12,7 @@
 
 我画了一张 <mark>Redis 数据类型（也叫 Redis 对象）和底层数据结构的对应关图</mark>，左边是 Redis 3.0版本的，也就是《Redis 设计与实现》这本书讲解的版本，现在看还是有点过时了，右边是现在 Github 最新的 Redis 代码的（还未发布正式版本）。
 
-![](./images/9fa26a74965efbf0f56b707a03bb9b7f-20230309232518487.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/9fa26a74965efbf0f56b707a03bb9b7f-20230309232518487.png)
 
 可以看到，Redis 数据类型的底层数据结构随着版本的更新也有所不同，比如：
 
@@ -23,7 +23,7 @@
 
 不多 BB 了，直接发车！
 
-![](./images/a9c3e7dc4ac79363d8eb8eb2290a58e6.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/a9c3e7dc4ac79363d8eb8eb2290a58e6.png)
 
 ## [#](https://xiaolincoding.com/redis/data_struct/data_struct.html#%E9%94%AE%E5%80%BC%E5%AF%B9%E6%95%B0%E6%8D%AE%E5%BA%93%E6%98%AF%E6%80%8E%E4%B9%88%E5%AE%9E%E7%8E%B0%E7%9A%84) 键值对数据库是怎么实现的？
 
@@ -59,7 +59,7 @@ Redis 是使用了一个「哈希表」保存所有键值对，哈希表的最�
 
 我这里画了一张 Redis 保存键值对所涉及到的数据结构。
 
-![](./images/f302fce6c92c0682024f47bf7579b44c.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/f302fce6c92c0682024f47bf7579b44c.png)
 
 这些数据结构的内部细节，我先不展开讲，后面在讲哈希表数据结构的时候，在详细的说说，因为用到的数据结构是一样的。这里先大概说下图中涉及到的数据结构的名字和用途：
 
@@ -70,7 +70,7 @@ Redis 是使用了一个「哈希表」保存所有键值对，哈希表的最�
 
 <mark>特别说明下，void \* key 和 void \* value 指针指向的是 **Redis 对象**，Redis 中的每个对象都由 redisObject 结构表示，如下图：</mark>
 
-![](./images/58d3987af2af868dca965193fb27c464.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/58d3987af2af868dca965193fb27c464.png)
 
 <mark>对象结构里包含的成员变量：</mark>
 
@@ -80,7 +80,7 @@ Redis 是使用了一个「哈希表」保存所有键值对，哈希表的最�
 
 我画了一张 Redis 键值对数据库的全景图，你就能清晰知道 <mark>Redis 对象和数据结构的关系了：</mark>
 
-![](./images/3c386666e4e7638a07b230ba14b400fe.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/3c386666e4e7638a07b230ba14b400fe.png)
 
 接下里，就好好聊一下底层数据结构！
 
@@ -100,7 +100,7 @@ C 语言的字符串其实就是一个字符数组，即数组中每个元素是
 
 比如，下图就是字符串“xiaolin”的 char\* 字符数组的结构：
 
-![](./images/376128646c75a893ad47914858fa2131.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/376128646c75a893ad47914858fa2131.png)
 
 没学过 C 语言的同学，可能会好奇为什么最后一个字符是“\\0”？
 
@@ -110,13 +110,13 @@ C 语言的字符串其实就是一个字符数组，即数组中每个元素是
 
 举个例子，C 语言获取字符串长度的函数 `strlen`，就是通过字符数组中的每一个字符，并进行计数，等遇到字符为 “\\0” 后，就会停止遍历，然后返回已经统计到的字符个数，即为字符串长度。下图显示了 strlen 函数的执行流程：
 
-![](./images/bcf6bde3b647bdc343efcbc1a8f10579.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/bcf6bde3b647bdc343efcbc1a8f10579.png)
 
 很明显，**C 语言获取字符串长度的时间复杂度是 O（N）（_这是一个可以改进的地方_**）
 
 C 语言字符串用 “\\0” 字符作为结尾标记有个缺陷。假设有个字符串中有个 “\\0” 字符，这时在操作这个字符串时就会**提早结束**，比如 “xiao\\0lin” 字符串，计算字符串长度的时候则会是 4，如下图：
 
-![](./images/6286480eb1840a8930e18fd215d82565.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/6286480eb1840a8930e18fd215d82565.png)
 
 因此，除了字符串的末尾之外，**字符串里面不能含有 “\\0” 字符**，否则最先被程序读入的 “\\0” 字符将被误认为是字符串结尾，这个限制使得 C 语言的字符串只能保存文本数据，**不能保存像图片、音频、视频文化这样的二进制数据（_这也是一个可以改进的地方_）**
 
@@ -143,7 +143,7 @@ Redis 实现的 SDS 的结构就把上面这些问题解决了，接下来我们
 
 <mark>下图就是 Redis 5.0 的 SDS 的数据结构：</mark>
 
-![](./images/516738c4058cdf9109e40a7812ef4239.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/516738c4058cdf9109e40a7812ef4239.png)
 
 <mark>结构中的每个成员变量分别介绍下：</mark>
 
@@ -264,7 +264,7 @@ SDS 结构中有个 flags 成员变量，表示的是 SDS 类型。
 
 大家猜猜这个结构体大小是多少？我先直接说答案，这个结构体大小计算出来是 8。
 
-![](./images/35820959e8cf4376391c427ed7f81495.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/35820959e8cf4376391c427ed7f81495.png)
 
 这是因为默认情况下，编译器是使用「字节对齐」的方式分配内存，虽然 char 类型只占一个字节，但是由于成员变量里有 int 类型，它占用了 4 个字节，所以在成员变量为 char 类型分配内存时，会分配 4 个字节，其中这多余的 3 个字节是为了字节对齐而分配的，相当于有 3 个字节被浪费掉了。
 
@@ -287,7 +287,7 @@ SDS 结构中有个 flags 成员变量，表示的是 SDS 类型。
 
 这时打印的结果是 5（1 个字节 char + 4 字节 int）。
 
-![](./images/47e6c8fbc17fd6c89bdfcb5eedaaacff.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/47e6c8fbc17fd6c89bdfcb5eedaaacff.png)
 
 可以看得出，这是按照实际占用字节数进行分配内存的，这样可以节省内存空间。
 
@@ -315,7 +315,7 @@ Redis 的 List 对象的底层实现之一就是链表。C 语言本身没有链
 
 有前置节点和后置节点，可以看的出，这个是一个双向链表。
 
-![](./images/4fecbf7f63c73ec284a4821e0bfe2843.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/4fecbf7f63c73ec284a4821e0bfe2843.png)
 
 ### [#](https://xiaolincoding.com/redis/data_struct/data_struct.html#%E9%93%BE%E8%A1%A8%E7%BB%93%E6%9E%84%E8%AE%BE%E8%AE%A1) 链表结构设计
 
@@ -341,7 +341,7 @@ list 结构为链表提供了链表头指针 head、链表尾节点 tail、链�
 
 举个例子，下面是由 list 结构和 3 个 listNode 结构组成的链表。
 
-![](./images/cadf797496816eb343a19c2451437f1e.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/cadf797496816eb343a19c2451437f1e.png)
 
 ### [#](https://xiaolincoding.com/redis/data_struct/data_struct.html#%E9%93%BE%E8%A1%A8%E7%9A%84%E4%BC%98%E5%8A%BF%E4%B8%8E%E7%BC%BA%E9%99%B7) 链表的优势与缺陷
 
@@ -384,7 +384,7 @@ list 结构为链表提供了链表头指针 head、链表尾节点 tail、链�
 
 <mark>压缩列表是 Redis 为了节约内存而开发的，它是**由连续内存块组成的顺序型数据结构**，有点类似于数组。</mark>
 
-![](./images/ab0b44f557f8b5bc7acb3a53d43ebfcb.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/ab0b44f557f8b5bc7acb3a53d43ebfcb.png)
 
 <mark>压缩列表在表头有三个字段：</mark>
 
@@ -397,7 +397,7 @@ list 结构为链表提供了链表头指针 head、链表尾节点 tail、链�
 
 <mark>另外，压缩列表节点（entry）的构成如下：</mark>
 
-![](./images/a3b1f6235cf0587115b21312fe60289c.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/a3b1f6235cf0587115b21312fe60289c.png)
 
 <mark>压缩列表节点包含三部分内容：</mark>
 
@@ -416,7 +416,7 @@ list 结构为链表提供了链表头指针 head、链表尾节点 tail、链�
 
 <mark>encoding 属性的空间大小跟数据是字符串还是整数，以及字符串的长度有关</mark>，如下图（下图中的 content 表示的是实际数据，即本文的 data 字段）：
 
-![](./images/压缩列表编码.webp)
+![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/%E5%8E%8B%E7%BC%A9%E5%88%97%E8%A1%A8%E7%BC%96%E7%A0%81.png)
 
 -   <mark>如果**当前节点的数据是整数**，则 encoding 会使用 **1 字节的空间**进行编码，也就是 encoding 长度为 1 字节。通过 encoding 确认了整数类型，就可以确认整数数据的实际大小了，比如如果 encoding 编码确认了数据是 int16 整数，那么 data 的长度就是 int16 的大小。</mark>
 -   <mark>如果**当前节点的数据是字符串，根据字符串的长度大小**，encoding 会使用 **1 字节/2字节/5字节的空间**进行编码，encoding 编码的前两个 bit 表示数据的类型，后续的其他 bit 标识字符串数据的实际长度，即 data 的长度。</mark>
@@ -434,19 +434,19 @@ list 结构为链表提供了链表头指针 head、链表尾节点 tail、链�
 
 现在假设一个压缩列表中有多个连续的、长度在 250～253 之间的节点，如下图：
 
-![](./images/462c6a65531667f2bcf420953b0aded9.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/462c6a65531667f2bcf420953b0aded9.png)
 
 因为这些节点长度值小于 254 字节，所以 prevlen 属性需要用 1 字节的空间来保存这个长度值。
 
 这时，如果将一个长度大于等于 254 字节的新节点加入到压缩列表的表头节点，即新节点将成为 e1 的前置节点，如下图：
 
-![](./images/d1a6deff4672580609c99a5b06bf3429.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/d1a6deff4672580609c99a5b06bf3429.png)
 
 因为 e1 节点的 prevlen 属性只有 1 个字节大小，无法保存新节点的长度，此时就需要对压缩列表的空间重分配操作，并将 e1 节点的 prevlen 属性从原来的 1 字节大小扩展为 5 字节大小。
 
 多米诺牌的效应就此开始。
 
-![](./images/1f0e5ae7ab749078cadda5ba0ed98eac.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/1f0e5ae7ab749078cadda5ba0ed98eac.png)
 
 e1 原本的长度在 250～253 之间，因为刚才的扩展空间，此时 e1 的长度就大于等于 254 了，因此原本 e2 保存 e1 的 prevlen 属性也必须从 1 字节扩展至 5 字节大小。
 
@@ -500,7 +500,7 @@ e1 原本的长度在 250～253 之间，因为刚才的扩展空间，此时 e1
 
 可以看到，哈希表是一个数组（dictEntry \*\*table），数组的每个元素是一个指向「哈希表节点（dictEntry）」的指针。
 
-![](./images/dc495ffeaa3c3d8cb2e12129b3423118.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/dc495ffeaa3c3d8cb2e12129b3423118.png)
 
 <mark>哈希表节点的结构如下：</mark>
 
@@ -534,7 +534,7 @@ dictEntry 结构里不仅包含指向键和值的指针，还包含了指向下�
 
 举个例子，有一个可以存放 8 个哈希桶的哈希表。key1 经过哈希函数计算后，再将「哈希值 % 8 」进行取模计算，结果值为 1，那么就对应哈希桶 1，类似的，key9 和 key10 分别对应哈希桶 1 和桶 6。
 
-![](./images/753724a072e77d139c926ecf1f049b29.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/753724a072e77d139c926ecf1f049b29.png)
 
 此时，key1 和 key9 对应到了相同的哈希桶中，这就发生了哈希冲突。
 
@@ -550,7 +550,7 @@ Redis 采用了「**链式哈希**」的方法来解决哈希冲突。
 
 还是用前面的哈希冲突例子，key1 和 key9 经过哈希计算后，都落在同一个哈希桶，链式哈希的话，key1 就会通过 next 指针指向 key9，形成一个单向链表。
 
-![](./images/675c23857a36b2dab26ed2e6a7b94b5d.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/675c23857a36b2dab26ed2e6a7b94b5d.png)
 
 不过，链式哈希局限性也很明显，随着链表长度的增加，在查询这一位置上的数据的耗时就会增加，毕竟链表的查询的时间复杂度是 O(n)。
 
@@ -572,7 +572,7 @@ Redis 采用了「**链式哈希**」的方法来解决哈希冲突。
 
 之所以定义了 2 个哈希表，是因为进行 rehash 的时候，需要用上 2 个哈希表了。
 
-![](./images/2fedbc9cd4cb7236c302d695686dd478.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/2fedbc9cd4cb7236c302d695686dd478.png)
 
 在正常服务请求阶段，插入的数据，都会写入到「哈希表 1」，此时的「哈希表 2 」 并没有被分配空间。
 
@@ -584,7 +584,7 @@ Redis 采用了「**链式哈希**」的方法来解决哈希冲突。
 
 为了方便你理解，我把 rehash 这三个过程画在了下面这张图：
 
-![](./images/cabce0ce7e320bc9d9b5bde947b6811b.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/cabce0ce7e320bc9d9b5bde947b6811b.png)
 
 这个过程看起来简单，但是其实第二步很有问题，<mark>**如果「哈希表 1 」的数据量非常大，那么在迁移至「哈希表 2 」的时候，因为会涉及大量的数据拷贝，此时可能会对 Redis 造成阻塞，无法服务其他请求**。</mark>
 
@@ -614,7 +614,7 @@ rehash 的触发条件跟负载因子（load factor）有关系。
 
 <mark>负载因子可以通过下面这个公式计算：</mark>
 
-![](./images/85f597f7851b90d6c78bb0d8e39690fc.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/85f597f7851b90d6c78bb0d8e39690fc.png)
 
 <mark>触发 rehash 操作的条件，主要有两个：</mark>
 
@@ -655,15 +655,15 @@ rehash 的触发条件跟负载因子（load factor）有关系。
 
 举个例子，假设有一个整数集合里有 3 个类型为 int16\_t 的元素。
 
-![](./images/5dbdfa7cfbdd1d12a4d9458c6c90d472.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/5dbdfa7cfbdd1d12a4d9458c6c90d472.png)
 
 现在，往这个整数集合中加入一个新元素 65535，这个新元素需要用 int32\_t 类型来保存，所以整数集合要进行升级操作，首先需要为 contents 数组扩容，**在原本空间的大小之上再扩容多 80 位（4x32-3x16=80），这样就能保存下 4 个类型为 int32\_t 的元素**。
 
-![](./images/e2e3e19fc934e70563fbdfde2af39a2b.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/e2e3e19fc934e70563fbdfde2af39a2b.png)
 
 扩容完 contents 数组空间大小后，需要将之前的三个元素转换为 int32\_t 类型，并将转换后的元素放置到正确的位上面，并且需要维持底层数组的有序性不变，整个转换过程如下：
 
-![](./images/e84b052381e240eeb8cc97d6b729968b.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/e84b052381e240eeb8cc97d6b729968b.png)
 
 > 整数集合升级有什么好处呢？
 
@@ -707,7 +707,7 @@ Zset 对象在使用跳表作为数据结构的时候，是使用由「哈希表
 
 那跳表长什么样呢？我这里举个例子，下图展示了一个层级为 3 的跳表。
 
-![](./images/2ae0ed790c7e7403f215acb2bd82e884.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/2ae0ed790c7e7403f215acb2bd82e884.png)
 
 图中头节点有 L0~L2 三个头指针，分别指向了不同层级的节点，然后每个层级的节点都通过指针连接起来：
 
@@ -745,7 +745,7 @@ Zset 对象要同时保存「元素」和「元素的权重」，对应到跳表
 
 比如，下面这张图，展示了各个节点的跨度。
 
-![](./images/3层跳表-跨度.webp)
+![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/3%E5%B1%82%E8%B7%B3%E8%A1%A8-%E8%B7%A8%E5%BA%A6.png)
 
 第一眼看到跨度的时候，以为是遍历操作有关，实际上并没有任何关系，遍历操作只需要用前向指针（struct zskiplistNode \*forward）就可以完成了。
 
@@ -781,7 +781,7 @@ Zset 对象要同时保存「元素」和「元素的权重」，对应到跳表
 
 举个例子，下图有个 3 层级的跳表。
 
-![](./images/3层跳表-跨度.drawio.webp)
+![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/3%E5%B1%82%E8%B7%B3%E8%A1%A8-%E8%B7%A8%E5%BA%A6.drawio.png)
 
 如果要查找「元素：abcd，权重：4」的节点，查找的过程是这样的：
 
@@ -796,7 +796,7 @@ Zset 对象要同时保存「元素」和「元素的权重」，对应到跳表
 
 举个例子，下图的跳表，第二层的节点数量只有 1 个，而第一层的节点数量有 6 个。
 
-![](./images/2802786ab4f52c1e248904e5cef33a74.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/2802786ab4f52c1e248904e5cef33a74.png)
 
 这时，如果想要查询节点 6，那基本就跟链表的查询复杂度一样，就需要在第一层的节点中依次顺序查找，复杂度就是 O(N) 了。所以，为了降低查询复杂度，我们就需要维持相邻层结点数间的关系。
 
@@ -804,7 +804,7 @@ Zset 对象要同时保存「元素」和「元素的权重」，对应到跳表
 
 下图的跳表就是，相邻两层的节点数量的比例是 2 : 1。
 
-![](./images/cdc14698f629c74bf5a239cc8a611aeb.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/cdc14698f629c74bf5a239cc8a611aeb.png)
 
 > 那怎样才能维持相邻两层的节点数量的比例为 2 : 1 呢？
 
@@ -916,7 +916,7 @@ Redis 则采用一种巧妙的方法是，**跳表在创建节点的时候，随
 
 我画了一张图，方便你理解 quicklist 数据结构。
 
-![](./images/f46cbe347f65ded522f1cc3fd8dba549.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/f46cbe347f65ded522f1cc3fd8dba549.png)
 
 <mark>在向 quicklist 添加一个元素的时候，不会像普通的链表那样，直接新建一个链表节点。而是会检查插入位置的压缩列表是否能容纳该元素，如果能容纳就直接保存到 quicklistNode 结构里的压缩列表，如果不能容纳，才会新建一个新的 quicklistNode 结构。</mark>
 
@@ -938,13 +938,13 @@ listpack 采用了压缩列表的很多优秀的设计，比如还是用一块�
 
 我们先看看 <mark>listpack 结构：</mark>
 
-![](./images/4d2dc376b5fd68dae70d9284ae82b73a.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/4d2dc376b5fd68dae70d9284ae82b73a.png)
 
 listpack 头包含两个属性，分别记录了 listpack 总字节数和元素数量，然后 listpack 末尾也有个结尾标识。图中的 listpack entry 就是 listpack 的节点了。
 
 <mark>每个 listpack 节点结构如下：</mark>
 
-![](./images/c5fb0a602d4caaca37ff0357f05b0abf.webp)
+![](https://cdn.xiaolincoding.com//mysql/other/c5fb0a602d4caaca37ff0357f05b0abf.png)
 
 <mark>主要包含三个方面内容：</mark>
 
