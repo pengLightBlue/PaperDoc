@@ -20,7 +20,7 @@
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E4%BB%8B%E7%BB%8D) 介绍
 
-String 是最基本的 key-value 结构，key 是唯一标识，value 是具体的值，value其实不仅是字符串， 也可以是数字（整数或浮点数），value 最多可以容纳的数据长度是 `512M`。
+<mark>String 是最基本的 key-value 结构，key 是唯一标识，value 是具体的值，value其实不仅是字符串， 也可以是数字（整数或浮点数），value 最多可以容纳的数据长度是 `512M`。</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/string.png)
 
@@ -34,41 +34,41 @@ SDS 和我们认识的 C 字符串不太一样，之所以没有使用 C 语言�
 -   **SDS 获取字符串长度的时间复杂度是 O(1)**。因为 C 语言的字符串并不记录自身长度，所以获取长度的复杂度为 O(n)；而 SDS 结构里用 `len` 属性记录了字符串长度，所以复杂度为 `O(1)`。
 -   **Redis 的 SDS API 是安全的，拼接字符串不会造成缓冲区溢出**。因为 SDS 在拼接字符串之前会检查 SDS 空间是否满足要求，如果空间不够会自动扩容，所以不会导致缓冲区溢出的问题。
 
-字符串对象的内部编码（encoding）有 3 种 ：**int、raw和 embstr**。
+<mark>字符串对象的内部编码（encoding）有 3 种 ：**int、raw和 embstr**。</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/string%E7%BB%93%E6%9E%84.png)
 
-如果一个字符串对象保存的是整数值，并且这个整数值可以用`long`类型来表示，那么字符串对象会将整数值保存在字符串对象结构的`ptr`属性里面（将`void*`转换成 long），并将字符串对象的编码设置为`int`。
+<mark>如果一个字符串对象保存的是整数值，并且这个整数值可以用`long`类型来表示，那么字符串对象会将整数值保存在字符串对象结构的`ptr`属性里面（将`void*`转换成 long），并将字符串对象的编码设置为`int`。</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/int.png)
 
-如果字符串对象保存的是一个字符串，并且这个字符申的长度小于等于 32 字节（redis 2.+版本），那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串，并将对象的编码设置为`embstr`， `embstr`编码是专门用于保存短字符串的一种优化编码方式：
+<mark>如果字符串对象保存的是一个字符串，并且这个字符申的长度小于等于 32 字节（redis 2.+版本），那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串，并将对象的编码设置为`embstr`， `embstr`编码是专门用于保存短字符串的一种优化编码方式：</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/embstr.png)
 
-如果字符串对象保存的是一个字符串，并且这个字符串的长度大于 32 字节（redis 2.+版本），那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串，并将对象的编码设置为`raw`：
+<mark>如果字符串对象保存的是一个字符串，并且这个字符串的长度大于 32 字节（redis 2.+版本），那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串，并将对象的编码设置为`raw`：</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/raw.png)
 
-注意，embstr 编码和 raw 编码的边界在 redis 不同版本中是不一样的：
+注意，<mark>embstr 编码和 raw 编码的边界在 redis 不同版本中是不一样的：</mark>
 
 -   redis 2.+ 是 32 字节
 -   redis 3.0-4.0 是 39 字节
 -   redis 5.0 是 44 字节
 
-可以看到`embstr`和`raw`编码都会使用`SDS`来保存值，但不同之处在于`embstr`会通过一次内存分配函数来分配一块连续的内存空间来保存`redisObject`和`SDS`，而`raw`编码会通过调用两次内存分配函数来分别分配两块空间来保存`redisObject`和`SDS`。Redis这样做会有很多好处：
+可以看到`embstr`和`raw`编码都会使用`SDS`来保存值，<mark>但不同之处在于`embstr`会通过一次内存分配函数来分配一块连续的内存空间来保存`redisObject`和`SDS`，而`raw`编码会通过调用两次内存分配函数来分别分配两块空间来保存`redisObject`和`SDS`</mark>。Redis这样做会有很多好处：
 
--   `embstr`编码将创建字符串对象所需的内存分配次数从 `raw` 编码的两次降低为一次；
--   释放 `embstr`编码的字符串对象同样只需要调用一次内存释放函数；
--   因为`embstr`编码的字符串对象的所有数据都保存在一块连续的内存里面可以更好的利用 CPU 缓存提升性能。
+-   `embstr`编码将创建字符串对象所需的<mark>内存分配次数从 `raw` 编码的两次降低为一次；</mark>
+-   释放 `embstr`编码的字符串对象同样<mark>只需要调用一次内存释放函数；</mark>
+-   因为`embstr`编码的字符串对象的所有数据都<mark>保存在一块连续的内存里面可以更好的利用 CPU 缓存提升性能。</mark>
 
 但是 embstr 也有缺点的：
 
--   如果字符串的长度增加需要重新分配内存时，整个redisObject和sds都需要重新分配空间，所以**embstr编码的字符串对象实际上是只读的**，redis没有为embstr编码的字符串对象编写任何相应的修改程序。当我们对embstr编码的字符串对象执行任何修改命令（例如append）时，程序会先将对象的编码从embstr转换成raw，然后再执行修改命令。
+-   如果字符串的长度增加需要重新分配内存时，整个redisObject和sds都需要重新分配空间，所以<mark>**embstr编码的字符串对象实际上是只读的**</mark>，redis没有为embstr编码的字符串对象编写任何相应的修改程序。当我们对embstr编码的字符串对象执行任何修改命令（例如append）时，<mark>程序会先将对象的编码从embstr转换成raw，然后再执行修改命令。</mark>
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4) 常用指令
 
-普通字符串的基本操作：
+<mark>普通字符串的基本操作：</mark>
 
     # 设置 key-value 类型的值
     > SET name lin
@@ -86,8 +86,7 @@ SDS 和我们认识的 C 字符串不太一样，之所以没有使用 C 语言�
     > DEL name
     (integer) 1
 
-
-批量设置 :
+<mark>批量设置 :</mark>
 
     # 批量设置 key-value 类型的值
     > MSET key1 value1 key2 value2 
@@ -116,8 +115,7 @@ SDS 和我们认识的 C 字符串不太一样，之所以没有使用 C 语言�
     > DECRBY number 10
     (integer) 0
 
-
-过期（默认为永不过期）：
+<mark>过期（默认为永不过期）：</mark>
 
     # 设置 key 在 60 秒后过期（该方法是针对已经存在的key设置过期时间）
     > EXPIRE name  60 
@@ -132,8 +130,7 @@ SDS 和我们认识的 C 字符串不太一样，之所以没有使用 C 语言�
     > SETEX key  60 value
     OK
 
-
-不存在就插入：
+<mark>不存在就插入：</mark>
 
     # 不存在就插入（not exists）
     >SETNX key value
@@ -146,12 +143,12 @@ SDS 和我们认识的 C 字符串不太一样，之所以没有使用 C 语言�
 
 使用 String 来缓存对象有两种方式：
 
--   直接缓存整个对象的 JSON，命令例子： `SET user:1 '{"name":"xiaolin", "age":18}'`。
--   采用将 key 进行分离为 user:ID:属性，采用 MSET 存储，用 MGET 获取各属性值，命令例子： `MSET user:1:name xiaolin user:1:age 18 user:2:name xiaomei user:2:age 20`。
+-   <mark>直接缓存整个对象的 JSON</mark>，命令例子： `SET user:1 '{"name":"xiaolin", "age":18}'`。
+-   <mark>采用将 key 进行分离为 user:ID:属性，采用 MSET 存储，用 MGET 获取各属性值</mark>，命令例子： `MSET user:1:name xiaolin user:1:age 18 user:2:name xiaomei user:2:age 20`。
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E8%A7%84%E8%AE%A1%E6%95%B0) 常规计数
 
-因为 Redis 处理命令是单线程，所以执行命令的过程是原子的。因此 String 数据类型适合计数场景，比如计算访问次数、点赞、转发、库存数量等等。
+因为 Redis 处理命令是单线程，所以执行命令的过程是原子的。因此 String 数据类型适合<mark>计数场景，比如计算访问次数、点赞、转发、库存数量等等</mark>。
 
 比如计算文章的阅读量：
 
@@ -174,12 +171,12 @@ SDS 和我们认识的 C 字符串不太一样，之所以没有使用 C 语言�
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81) 分布式锁
 
-SET 命令有个 NX 参数可以实现「key不存在才插入」，可以用它来实现分布式锁：
+<mark>SET 命令有个 NX 参数可以实现「key不存在才插入」，可以用它来实现分布式锁：</mark>
 
 -   如果 key 不存在，则显示插入成功，可以用来表示加锁成功；
 -   如果 key 存在，则会显示插入失败，可以用来表示加锁失败。
 
-一般而言，还会对分布式锁加上过期时间，分布式锁的命令如下：
+一般而言，还会对分布式锁加上<mark>过期时间</mark>，分布式锁的命令如下：
 
     SET lock_key unique_value NX PX 10000
 
@@ -191,7 +188,7 @@ SET 命令有个 NX 参数可以实现「key不存在才插入」，可以用它
 
 而解锁的过程就是将 lock\_key 键删除，但不能乱删，要保证执行操作的客户端就是加锁的客户端。所以，解锁的时候，我们要先判断锁的 unique\_value 是否为加锁客户端，是的话，才将 lock\_key 键删除。
 
-可以看到，解锁是有两个操作，这时就需要 Lua 脚本来保证解锁的原子性，因为 Redis 在执行 Lua 脚本时，可以以原子性的方式执行，保证了锁释放操作的原子性。
+可以看到，<mark>解锁是有两个操作，这时就需要 Lua 脚本来保证解锁的原子性</mark>，因为 Redis 在执行 Lua 脚本时，可以以原子性的方式执行，保证了锁释放操作的原子性。
 
     // 释放锁时，先比较 unique_value 是否相等，避免锁的误释放
     if redis.call("get",KEYS[1]) == ARGV[1] then
@@ -213,7 +210,7 @@ SET 命令有个 NX 参数可以实现「key不存在才插入」，可以用它
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/Session1.png)
 
-因此，我们需要借助 Redis 对这些 Session 信息进行统一的存储和管理，这样无论请求发送到那台服务器，服务器都会去同一个 Redis 获取相关的 Session 信息，这样就解决了分布式系统下 Session 存储的问题。
+因此，我们需要借助 Redis 对这些 Session 信息进行统一的存储和管理，这样无论请求发送到那台服务器，服务器都会去<mark>同一个 Redis 获取相关的 Session 信息</mark>，这样就解决了分布式系统下 Session 存储的问题。
 
 分布式系统使用同一个 Redis 存储 Session 流程图：
 
@@ -223,18 +220,18 @@ SET 命令有个 NX 参数可以实现「key不存在才插入」，可以用它
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E4%BB%8B%E7%BB%8D-2) 介绍
 
-List 列表是简单的字符串列表，**按照插入顺序排序**，可以从头部或尾部向 List 列表添加元素。
+List 列表是简单的字符串列表，<mark>**按照插入顺序排序**</mark>，可以从头部或尾部向 List 列表添加元素。
 
-列表的最大长度为 `2^32 - 1`，也即每个列表支持超过 `40 亿`个元素。
+<mark>列表的最大长度为 `2^32 - 1`，也即每个列表支持超过 `40 亿`个元素。</mark>
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%86%85%E9%83%A8%E5%AE%9E%E7%8E%B0-2) 内部实现
 
 List 类型的底层数据结构是由**双向链表或压缩列表**实现的：
 
--   如果列表的元素个数小于 `512` 个（默认值，可由 `list-max-ziplist-entries` 配置），列表每个元素的值都小于 `64` 字节（默认值，可由 `list-max-ziplist-value` 配置），Redis 会使用**压缩列表**作为 List 类型的底层数据结构；
--   如果列表的元素不满足上面的条件，Redis 会使用**双向链表**作为 List 类型的底层数据结构；
+-   <mark>如果列表的元素个数小于 `512` 个（默认值，可由 `list-max-ziplist-entries` 配置），列表每个元素的值都小于 `64` 字节（默认值，可由 `list-max-ziplist-value` 配置）</mark>，Redis 会使用**压缩列表**作为 List 类型的底层数据结构；
+-   如果列表的元素不满足上面的条件，Redis 会使用<mark>**双向链表**</mark>作为 List 类型的底层数据结构；
 
-但是**在 Redis 3.2 版本之后，List 数据类型底层数据结构就只由 quicklist 实现了，替代了双向链表和压缩列表**。
+但是**在 Redis <mark>3.2 版本之后，List 数据类型底层数据结构就只由 quicklist </mark>实现了，替代了双向链表和压缩列表**。
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4) 常用命令
 
@@ -262,15 +259,15 @@ List 类型的底层数据结构是由**双向链表或压缩列表**实现的�
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97) 消息队列
 
-消息队列在存取消息时，必须要满足三个需求，分别是**消息保序、处理重复的消息和保证消息可靠性**。
+消息队列在存取消息时，必须要满足三个需求，分别是<mark>**消息保序、处理重复的消息和保证消息可靠性**</mark>。
 
 Redis 的 List 和 Stream 两种数据类型，就可以满足消息队列的这三个需求。我们先来了解下基于 List 的消息队列实现方法，后面在介绍 Stream 数据类型时候，在详细说说 Stream。
 
 _1、如何满足消息保序需求？_
 
-List 本身就是按先进先出的顺序对数据进行存取的，所以，如果使用 List 作为消息队列保存消息的话，就已经能满足消息保序的需求了。
+List<mark> 本身就是按先进先出的顺序对数据进行存取</mark>的，所以，如果使用 List 作为消息队列保存消息的话，就已经能满足消息保序的需求了。
 
-List 可以使用 LPUSH + RPOP （或者反过来，RPUSH+LPOP）命令实现消息队列。
+List 可以使用<mark> LPUSH + RPOP （或者反过来，RPUSH+LPOP）</mark>命令实现消息队列。
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/list%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97.png)
 
@@ -281,11 +278,11 @@ List 可以使用 LPUSH + RPOP （或者反过来，RPUSH+LPOP）命令实现消
 
 不过，在消费者读取数据时，有一个潜在的性能风险点。
 
-在生产者往 List 中写入数据时，List 并不会主动地通知消费者有新消息写入，如果消费者想要及时处理消息，就需要在程序中不停地调用 `RPOP` 命令（比如使用一个while(1)循环）。如果有新消息写入，RPOP命令就会返回结果，否则，RPOP命令返回空值，再继续循环。
+<mark>在生产者往 List 中写入数据时，List 并不会主动地通知消费者有新消息写入</mark>，如果消费者想要及时处理消息，就需要在程序中不停地调用 `RPOP` 命令（比如使用一个while(1)循环）。如果有新消息写入，RPOP命令就会返回结果，否则，RPOP命令返回空值，再继续循环。
 
 所以，即使没有新消息写入List，消费者也要不停地调用 RPOP 命令，这就会导致消费者程序的 CPU 一直消耗在执行 RPOP 命令上，带来不必要的性能损失。
 
-为了解决这个问题，Redis提供了 BRPOP 命令。**BRPOP命令也称为阻塞式读取，客户端在没有读到队列数据时，自动阻塞，直到有新的数据写入队列，再开始读取新数据**。和消费者程序自己不停地调用RPOP命令相比，这种方式能节省CPU开销。
+为了解决这个问题，Redis提供了 BRPOP 命令。<mark>**BRPOP命令也称为阻塞式读取，客户端在没有读到队列数据时，自动阻塞，直到有新的数据写入队列，再开始读取新数据**</mark>。和消费者程序自己不停地调用RPOP命令相比，这种方式能节省CPU开销。
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97.png)
 
@@ -294,9 +291,9 @@ _2、如何处理重复的消息？_
 消费者要实现重复消息的判断，需要 2 个方面的要求：
 
 -   每个消息都有一个全局的 ID。
--   消费者要记录已经处理过的消息的 ID。当收到一条消息后，消费者程序就可以对比收到的消息 ID 和记录的已处理过的消息 ID，来判断当前收到的消息有没有经过处理。如果已经处理过，那么，消费者程序就不再进行处理了。
+-   消费者要记录已经处理过的消息的 ID。<mark>当收到一条消息后，消费者程序就可以对比收到的消息 ID 和记录的已处理过的消息 ID</mark>，来判断当前收到的消息有没有经过处理。如果已经处理过，那么，消费者程序就不再进行处理了。
 
-但是 **List 并不会为每个消息生成 ID 号，所以我们需要自行为每个消息生成一个全局唯一ID**，生成之后，我们在用 LPUSH 命令把消息插入 List 时，需要在消息中包含这个全局唯一 ID。
+但是<mark> **List 并不会为每个消息生成 ID 号，所以我们需要自行为每个消息生成一个全局唯一ID**</mark>，生成之后，我们在用 LPUSH 命令把消息插入 List 时，需要在消息中包含这个全局唯一 ID。
 
 例如，我们执行以下命令，就把一条全局 ID 为 111000102、库存量为 99 的消息插入了消息队列：
 
@@ -306,13 +303,13 @@ _2、如何处理重复的消息？_
 
 _3、如何保证消息可靠性？_
 
-当消费者程序从 List 中读取一条消息后，List 就不会再留存这条消息了。所以，如果消费者程序在处理消息的过程出现了故障或宕机，就会导致消息没有处理完成，那么，消费者程序再次启动后，就没法再次从 List 中读取消息了。
+<mark>当消费者程序从 List 中读取一条消息后，List 就不会再留存这条消息了。所以，如果消费者程序在处理消息的过程出现了故障或宕机，就会导致消息没有处理完成，那么，消费者程序再次启动后，就没法再次从 List 中读取消息了。</mark>
 
-为了留存消息，List 类型提供了 `BRPOPLPUSH` 命令，这个命令的**作用是让消费者程序从一个 List 中读取消息，同时，Redis 会把这个消息再插入到另一个 List（可以叫作备份 List）留存**。
+为了留存消息，List 类型提供了<mark> `BRPOPLPUSH` 命令，这个命令的**作用是让消费者程序从一个 List 中读取消息，同时，Redis 会把这个消息再插入到另一个 List（可以叫作备份 List）留存**。</mark>
 
 这样一来，如果消费者程序读了消息但没能正常处理，等它重启后，就可以从备份 List 中重新读取消息并进行处理了。
 
-好了，到这里可以知道基于 List 类型的消息队列，满足消息队列的三大需求（消息保序、处理重复的消息和保证消息可靠性）。
+好了，到这里可以知道<mark>基于 List 类型的消息队列，满足消息队列的三大需求</mark>（消息保序、处理重复的消息和保证消息可靠性）。
 
 -   消息保序：使用 LPUSH + RPOP；
 -   阻塞读取：使用 BRPOP；
@@ -321,7 +318,7 @@ _3、如何保证消息可靠性？_
 
 > List 作为消息队列有什么缺陷？
 
-**List 不支持多个消费者消费同一条消息**，因为一旦消费者拉取一条消息后，这条消息就从 List 中删除了，无法被其它消费者再次消费。
+<mark>**List 不支持多个消费者消费同一条消息**</mark>，因为一旦消费者拉取一条消息后，这条消息就从 List 中删除了，无法被其它消费者再次消费。
 
 要实现一条消息可以被多个消费者消费，那么就要将多个消费者组成一个消费组，使得多个消费者可以消费同一条消息，但是 **List 类型并不支持消费组的实现**。
 
@@ -339,12 +336,12 @@ Hash 与 String 对象的区别如下图所示:
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%86%85%E9%83%A8%E5%AE%9E%E7%8E%B0-3) 内部实现
 
-Hash 类型的底层数据结构是由**压缩列表或哈希表**实现的：
+<mark>Hash 类型的底层数据结构是由**压缩列表或哈希表**实现的：</mark>
 
--   如果哈希类型元素个数小于 `512` 个（默认值，可由 `hash-max-ziplist-entries` 配置），所有值小于 `64` 字节（默认值，可由 `hash-max-ziplist-value` 配置）的话，Redis 会使用**压缩列表**作为 Hash 类型的底层数据结构；
+-   如果哈希类型<mark>元素个数小于 `512` 个（默认值，可由 `hash-max-ziplist-entries` 配置），所有值小于 `64` 字节（默认值，可由 `hash-max-ziplist-value` 配置）的话，Redis 会使用**压缩列表**作为 Hash 类型的底层数据结构；</mark>
 -   如果哈希类型元素不满足上面条件，Redis 会使用**哈希表**作为 Hash 类型的 底层数据结构。
 
-**在 Redis 7.0 中，压缩列表数据结构已经废弃了，交由 listpack 数据结构来实现了**。
+<mark>**在 Redis 7.0 中，压缩列表数据结构已经废弃了，交由 listpack 数据结构来实现了**。</mark>
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4-2) 常用命令
 
@@ -401,11 +398,11 @@ Redis Hash 存储其结构如下图：
 
 在介绍 String 类型的应用场景时有所介绍，String + Json也是存储对象的一种方式，那么存储对象时，到底用 String + json 还是用 Hash 呢？
 
-一般对象用 String + Json 存储，对象中某些频繁变化的属性可以考虑抽出来用 Hash 类型存储。
+<mark>一般对象用 String + Json 存储，对象中某些频繁变化的属性可以考虑抽出来用 Hash 类型存储。</mark>
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E8%B4%AD%E7%89%A9%E8%BD%A6) 购物车
 
-以用户 id 为 key，商品 id 为 field，商品数量为 value，恰好构成了购物车的3个要素，如下图所示。
+<mark>以用户 id 为 key，商品 id 为 field，商品数量为 value，恰好构成了购物车的3个要素</mark>，如下图所示。
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/%E8%B4%AD%E7%89%A9%E8%BD%A6.png)
 
@@ -417,15 +414,15 @@ Redis Hash 存储其结构如下图：
 -   删除商品：`HDEL cart:{用户id} {商品id}`
 -   获取购物车所有商品：`HGETALL cart:{用户id}`
 
-当前仅仅是将商品ID存储到了Redis 中，在回显商品具体信息的时候，还需要拿着商品 id 查询一次数据库，获取完整的商品的信息。
+当前仅仅是将商品ID存储到了Redis 中，<mark>在回显商品具体信息的时候，还需要拿着商品 id 查询一次数据库，获取完整的商品的信息。</mark>
 
 ## [#](https://xiaolincoding.com/redis/data_struct/command.html#set) Set
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E4%BB%8B%E7%BB%8D-4) 介绍
 
-Set 类型是一个无序并唯一的键值集合，它的存储顺序不会按照插入的先后顺序进行存储。
+<mark>Set 类型是一个无序并唯一的键值集合，它的存储顺序不会按照插入的先后顺序进行存储。</mark>
 
-一个集合最多可以存储 `2^32-1` 个元素。概念和数学中个的集合基本类似，可以交集，并集，差集等等，所以 Set 类型除了支持集合内的增删改查，同时还支持多个集合取交集、并集、差集。
+<mark>一个集合最多可以存储 `2^32-1` 个元素</mark>。概念和数学中个的集合基本类似，可以交集，并集，差集等等，所以 Set 类型<mark>除了支持集合内的增删改查，同时还支持多个集合取交集、并集、差集。</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/set.png)
 
@@ -438,12 +435,12 @@ Set 类型和 List 类型的区别如下：
 
 Set 类型的底层数据结构是由**哈希表或整数集合**实现的：
 
--   如果集合中的元素都是整数且元素个数小于 `512` （默认值，`set-maxintset-entries`配置）个，Redis 会使用**整数集合**作为 Set 类型的底层数据结构；
--   如果集合中的元素不满足上面条件，则 Redis 使用**哈希表**作为 Set 类型的底层数据结构。
+-   如果集合中的元素都是<mark>整数且元素个数小于 `512` （默认值，`set-maxintset-entries`配置）个，Redis 会使用**整数集合**作为 Set 类型的底层数据结构；</mark>
+-   如果集合中的元素不满足上面条件，则 <mark>Redis 使用**哈希表**作为 Set 类型的底层数据结构。</mark>
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4-3) 常用命令
 
-Set常用操作：
+<mark>Set常用操作：</mark>
 
     # 往集合key中存入元素，元素存在则忽略，若key不存在则新建
     SADD key member [member ...]
@@ -462,8 +459,7 @@ Set常用操作：
     # 从集合key中随机选出count个元素，元素从key中删除
     SPOP key [count]
 
-
-Set运算操作：
+<mark>Set运算操作：</mark>
 
     # 交集运算
     SINTER key [key ...]
@@ -487,9 +483,9 @@ Set运算操作：
 
 因此 Set 类型比较适合用来数据去重和保障数据的唯一性，还可以用来统计多个集合的交集、错集和并集等，当我们存储的数据是无序并且需要去重的情况下，比较适合使用集合类型进行存储。
 
-但是要提醒你一下，这里有一个潜在的风险。**Set 的差集、并集和交集的计算复杂度较高，在数据量较大的情况下，如果直接执行这些计算，会导致 Redis 实例阻塞**。
+但是要提醒你一下，这里有一个潜在的风险。<mark>**Set 的差集、并集和交集的计算复杂度较高，在数据量较大的情况下，如果直接执行这些计算，会导致 Redis 实例阻塞**。</mark>
 
-在主从集群中，为了避免主库因为 Set 做聚合计算（交集、差集、并集）时导致主库被阻塞，我们可以选择一个从库完成聚合统计，或者把数据返回给客户端，由客户端来完成聚合统计。
+<mark>在主从集群中，为了避免主库因为 Set 做聚合计算（交集、差集、并集）时导致主库被阻塞，我们可以选择一个从库完成聚合统计，或者把数据返回给客户端，由客户端来完成聚合统计。</mark>
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E7%82%B9%E8%B5%9E) 点赞
 
@@ -535,7 +531,7 @@ Set 类型可以保证一个用户只能点一个赞，这里举例子一个场�
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%85%B1%E5%90%8C%E5%85%B3%E6%B3%A8) 共同关注
 
-Set 类型支持交集运算，所以可以用来计算共同关注的好友、公众号等。
+Set 类型支持交集运算，所以可以用来<mark>计算共同关注的好友、公众号</mark>等。
 
 key 可以是用户id，value 则是已关注的公众号的id。
 
@@ -547,7 +543,6 @@ key 可以是用户id，value 则是已关注的公众号的id。
     # uid:2  用户关注公众号 id 为 7、8、9、10、11
     > SADD uid:2 7 8 9 10 11
     (integer) 5
-
 
 `uid:1` 和 `uid:2` 共同关注的公众号：
 
@@ -565,7 +560,7 @@ key 可以是用户id，value 则是已关注的公众号的id。
     2) "6"
 
 
-验证某个公众号是否同时被 `uid:1` 或 `uid:2` 关注:
+验证某个公众号是否<mark>同时被 `uid:1` 或 `uid:2` 关注:</mark>
 
     > SISMEMBER uid:1 5
     (integer) 1 # 返回0，说明关注了
@@ -583,7 +578,7 @@ key为抽奖活动名，value为员工名称，把所有员工名称放入抽奖
     (integer) 5
 
 
-如果允许重复中奖，可以使用 SRANDMEMBER 命令。
+如果<mark>允许重复中奖，可以使用 SRANDMEMBER 命令。</mark>
 
     # 抽取 1 个一等奖：
     > SRANDMEMBER lucky 1
@@ -599,7 +594,7 @@ key为抽奖活动名，value为员工名称，把所有员工名称放入抽奖
     3) "Jerry"
 
 
-如果不允许重复中奖，可以使用 SPOP 命令。
+如果<mark>不允许重复中奖，可以使用 SPOP 命令。</mark>
 
     # 抽取一等奖1个
     > SPOP lucky 1
@@ -621,7 +616,7 @@ key为抽奖活动名，value为员工名称，把所有员工名称放入抽奖
 
 Zset 类型（有序集合类型）相比于 Set 类型多了一个排序属性 score（分值），对于有序集合 ZSet 来说，每个存储元素相当于有两个值组成的，一个是有序集合的元素值，一个是排序值。
 
-有序集合保留了集合不能有重复成员的特性（分值可以重复），但不同的是，有序集合中的元素可以排序。
+<mark>有序集合保留了集合不能有重复成员的特性（分值可以重复），但不同的是，有序集合中的元素可以排序。</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/zset.png)
 
@@ -629,14 +624,14 @@ Zset 类型（有序集合类型）相比于 Set 类型多了一个排序属性 
 
 Zset 类型的底层数据结构是由**压缩列表或跳表**实现的：
 
--   如果有序集合的元素个数小于 `128` 个，并且每个元素的值小于 `64` 字节时，Redis 会使用**压缩列表**作为 Zset 类型的底层数据结构；
--   如果有序集合的元素不满足上面的条件，Redis 会使用**跳表**作为 Zset 类型的底层数据结构；
+-   如果有序集合的<mark>元素个数小于 `128` 个，并且每个元素的值小于 `64` 字节时，Redis 会使用**压缩列表**作为 Zset 类型的底层数据结构；</mark>
+-   如果有序集合的元素不满足上面的条件，Redis 会使用<mark>**跳表**作为 Zset 类型的底层数据结构；</mark>
 
-**在 Redis 7.0 中，压缩列表数据结构已经废弃了，交由 listpack 数据结构来实现了。**
+<mark>**在 Redis 7.0 中，压缩列表数据结构已经废弃了，交由 listpack 数据结构来实现了。**</mark>
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4-4) 常用命令
 
-Zset 常用操作：
+<mark>Zset 常用操作：</mark>
 
     # 往有序集合key中加入带分值元素
     ZADD key score member [[score member]...]   
@@ -676,7 +671,7 @@ Zset 运算操作（相比于 Set 类型，ZSet 类型没有支持差集运算�
 
 Zset 类型（Sorted Set，有序集合） 可以根据元素的权重来排序，我们可以自己来决定每个元素的权重值。比如说，我们可以根据元素插入 Sorted Set 的时间确定权重值，先插入的元素权重小，后插入的元素权重大。
 
-在面对需要展示最新列表、排行榜等场景时，如果数据更新频繁或者需要分页显示，可以优先考虑使用 Sorted Set。
+在面对需要展示<mark>最新列表、排行榜</mark>等场景时，如果数据更新频繁或者需要分页显示，可以优先考虑使用 Sorted Set。
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E6%8E%92%E8%A1%8C%E6%A6%9C) 排行榜
 
@@ -712,8 +707,7 @@ Zset 类型（Sorted Set，有序集合） 可以根据元素的权重来排序�
     > ZSCORE user:xiaolin:ranking arcticle:4
     "50"
 
-
-获取小林文章赞数最多的 3 篇文章，可以使用 ZREVRANGE 命令（倒序获取有序集合 key 从start下标到stop下标的元素）：
+<mark>获取小林文章赞数最多的 3 篇文章，可以使用 ZREVRANGE 命令（倒序获取有序集合 key 从start下标到stop下标的元素）：</mark>
 
     # WITHSCORES 表示把 score 也显示出来
     > ZREVRANGE user:xiaolin:ranking 0 2 WITHSCORES
@@ -724,8 +718,7 @@ Zset 类型（Sorted Set，有序集合） 可以根据元素的权重来排序�
     5) "arcticle:3"
     6) "100"
 
-
-获取小林 100 赞到 200 赞的文章，可以使用 ZRANGEBYSCORE 命令（返回有序集合中指定分数区间内的成员，分数由低到高排序）：
+<mark>获取小林 100 赞到 200 赞的文章，可以使用 ZRANGEBYSCORE 命令</mark>（返回有序集合中指定分数区间内的成员，分数由低到高排序）：
 
     > ZRANGEBYSCORE user:xiaolin:ranking 100 200 WITHSCORES
     1) "arcticle:3"
@@ -738,7 +731,7 @@ Zset 类型（Sorted Set，有序集合） 可以根据元素的权重来排序�
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E7%94%B5%E8%AF%9D%E3%80%81%E5%A7%93%E5%90%8D%E6%8E%92%E5%BA%8F) 电话、姓名排序
 
-使用有序集合的 `ZRANGEBYLEX` 或 `ZREVRANGEBYLEX` 可以帮助我们实现电话号码或姓名的排序，我们以 `ZRANGEBYLEX` （返回指定成员区间内的成员，按 key 正序排列，分数必须相同）为例。
+使用有序集合的 `ZRANGEBYLEX` 或 `ZREVRANGEBYLEX` 可以帮助我们<mark>实现电话号码或姓名的排序</mark>，我们以 `ZRANGEBYLEX` （返回指定成员区间内的成员，按 key 正序排列，分数必须相同）为例。
 
 **注意：不要在分数不一致的 SortSet 集合中去使用 ZRANGEBYLEX和 ZREVRANGEBYLEX 指令，因为获取的结果会不准确。**
 
@@ -753,8 +746,7 @@ _1、电话排序_
     > ZADD phone 0 13300111100 0 13310414300 0 13352110901 
     (integer) 3
 
-
-获取所有号码:
+<mark>获取所有号码:</mark>
 
     > ZRANGEBYLEX phone - +
     1) "13100111100"
@@ -767,8 +759,7 @@ _1、电话排序_
     8) "13310414300"
     9) "13352110901"
 
-
-获取 132 号段的号码：
+<mark>获取 132 号段的号码：</mark>
 
     > ZRANGEBYLEX phone [132 (133
     1) "13200111100"
@@ -803,8 +794,7 @@ _2、姓名排序_
     5) "Jake"
     6) "Toumas"
 
-
-获取名字中大写字母A开头的所有人：
+<mark>获取名字中大写字母A开头的所有人：</mark>
 
     > ZRANGEBYLEX names [A (B
     1) "Aidehua"
@@ -823,21 +813,21 @@ _2、姓名排序_
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E4%BB%8B%E7%BB%8D-6) 介绍
 
-Bitmap，即位图，是一串连续的二进制数组（0和1），可以通过偏移量（offset）定位元素。BitMap通过最小的单位bit来进行`0|1`的设置，表示某个元素的值或者状态，时间复杂度为O(1)。
+Bitmap，即位图，<mark>是一串连续的二进制数组（0和1），可以通过偏移量（offset）定位元素</mark>。BitMap通过最小的单位bit来进行`0|1`的设置，表示某个元素的值或者状态，时间复杂度为O(1)。
 
-由于 bit 是计算机中最小的单位，使用它进行储存将非常节省空间，特别适合一些数据量大且使用**二值统计的场景**。
+由于 bit 是计算机中最小的单位，<mark>使用它进行储存将非常节省空间，特别适合一些数据量大且使用**二值统计的场景**。</mark>
 
 ![](https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/bitmap.png)
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%86%85%E9%83%A8%E5%AE%9E%E7%8E%B0-6) 内部实现
 
-Bitmap 本身是用 String 类型作为底层数据结构实现的一种统计二值状态的数据类型。
+Bitmap 本身是用 <mark>String 类型</mark>作为底层数据结构实现的一种统计二值状态的数据类型。
 
-String 类型是会保存为二进制的字节数组，所以，Redis 就把字节数组的每个 bit 位利用起来，用来表示一个元素的二值状态，你可以把 Bitmap 看作是一个 bit 数组。
+String 类型是会保存为二进制的字节数组，所以，Redis 就把字节数组的每个 bit 位利用起来，用来表示一个元素的二值状态，你可以把 Bitmap 看作是一个 <mark>bit 数组</mark>。
 
 ### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4-5) 常用命令
 
-bitmap 基本操作：
+<mark>bitmap 基本操作：</mark>
 
     # 设置值，其中value只能是 0 和 1
     SETBIT key offset value
@@ -849,8 +839,7 @@ bitmap 基本操作：
     # start 和 end 以字节为单位
     BITCOUNT key start end
 
-
-bitmap 运算操作：
+<mark>bitmap 运算操作：</mark>
 
     # BitMap间的运算
     # operations 位移操作符，枚举值
@@ -898,20 +887,20 @@ Bitmap 类型非常适合二值状态统计的场景，这里的二值状态就�
 
 > 如何统计这个月首次打卡时间呢？
 
-Redis 提供了 `BITPOS key bitValue [start] [end]`指令，返回数据表示 Bitmap 中第一个值为 `bitValue` 的 offset 位置。
+Redis 提供了<mark> `BITPOS key bitValue [start] [end]`指令，返回数据表示 Bitmap 中第一个值为 `bitValue` 的 offset 位置</mark>。
 
 在默认情况下， 命令将检测整个位图， 用户可以通过可选的 `start` 参数和 `end` 参数指定要检测的范围。所以我们可以通过执行这条命令来获取 userID = 100 在 2022 年 6 月份**首次打卡**日期：
 
     BITPOS uid:sign:100:202206 1
 
 
-需要注意的是，因为 offset 从 0 开始的，所以我们需要将返回的 value + 1 。
+需要注意的是，因为 <mark>offset 从 0 开始的，所以我们需要将返回的 value + 1 </mark>。
 
 #### [#](https://xiaolincoding.com/redis/data_struct/command.html#%E5%88%A4%E6%96%AD%E7%94%A8%E6%88%B7%E7%99%BB%E9%99%86%E6%80%81) 判断用户登陆态
 
 Bitmap 提供了 `GETBIT、SETBIT` 操作，通过一个偏移值 offset 对 bit 数组的 offset 位置的 bit 位进行读写操作，需要注意的是 offset 从 0 开始。
 
-只需要一个 key = login\_status 表示存储用户登陆状态集合数据， 将用户 ID 作为 offset，在线就设置为 1，下线设置 0。通过 `GETBIT`判断对应的用户是否在线。 5000 万用户只需要 6 MB 的空间。
+只需要一个 key = login\_status 表示存储用户登陆状态集合数据， 将用户 ID 作为 offset，在线就设置为 1，下线设置 0。<mark>通过 `GETBIT`判断对应的用户是否在线。 5000 万用户只需要 6 MB 的空间。</mark>
 
 假如我们要判断 ID = 10086 的用户的登陆情况：
 
@@ -938,13 +927,13 @@ Bitmap 提供了 `GETBIT、SETBIT` 操作，通过一个偏移值 offset 对 bit
 
 key 对应的集合的每个 bit 位的数据则是一个用户在该日期的打卡记录。
 
-一共有 7 个这样的 Bitmap，如果我们能对这 7 个 Bitmap 的对应的 bit 位做 『与』运算。同样的 UserID offset 都是一样的，当一个 userID 在 7 个 Bitmap 对应对应的 offset 位置的 bit = 1 就说明该用户 7 天连续打卡。
+<mark>一共有 7 个这样的 Bitmap，如果我们能对这 7 个 Bitmap 的对应的 bit 位做 『与』运算。同样的 UserID offset 都是一样的，当一个 userID 在 7 个 Bitmap 对应对应的 offset 位置的 bit = 1 就说明该用户 7 天连续打卡。</mark>
 
-结果保存到一个新 Bitmap 中，我们再通过 `BITCOUNT` 统计 bit = 1 的个数便得到了连续打卡 7 天的用户总数了。
+<mark>结果保存到一个新 Bitmap 中，我们再通过 `BITCOUNT` 统计 bit = 1 的个数便得到了连续打卡 7 天的用户总数了。</mark>
 
-Redis 提供了 `BITOP operation destkey key [key ...]`这个指令用于对一个或者多个 key 的 Bitmap 进行位元操作。
+Redis 提供了<mark> `BITOP operation destkey key [key ...]`这个指令用于对一个或者多个 key 的 Bitmap 进行位元操作。</mark>
 
--   `operation` 可以是 `and`、`OR`、`NOT`、`XOR`。当 BITOP 处理不同长度的字符串时，较短的那个字符串所缺少的部分会被看作 `0` 。空的 `key` 也被看作是包含 `0` 的字符串序列。
+-   <mark>`operation` 可以是 `and`、`OR`、`NOT`、`XOR`。当 BITOP 处理不同长度的字符串时，较短的那个字符串所缺少的部分会被看作 `0` 。空的 `key` 也被看作是包含 `0` 的字符串序列。</mark>
 
 假设要统计 3 天连续打卡的用户数，则是将三个 bitmap 进行 AND 操作，并将结果保存到 destmap 中，接着对 destmap 执行 BITCOUNT 统计，如下命令：
 
