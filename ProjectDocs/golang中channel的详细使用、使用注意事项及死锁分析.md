@@ -2,15 +2,15 @@
 
 ## 什么是 channel 管道
 
-它是一个数据管道，可以往里面写数据，从里面读数据。
+<mark>它是一个数据管道，可以往里面写数据，从里面读数据</mark>。
 
-channel 是 goroutine 之间数据通信桥梁，而且是线程安全的。
+<mark>channel 是 goroutine 之间数据通信桥梁，而且是线程安全的</mark>。
 
 channel 遵循先进先出原则。
 
-写入，读出数据都会加锁。
+<mark>写入，读出数据都会加锁</mark>。
 
-**channel 可以分为 3 种类型：**
+<mark>**channel 可以分为 3 种类型：**</mark>
 
 -   只读 channel，单向 channel
     
@@ -19,7 +19,7 @@ channel 遵循先进先出原则。
 -   可读可写 channel
     
 
-**channel 还可按是否带有缓冲区分为：**
+<mark>**channel 还可按是否带有缓冲区分为：**</mark>
 
 -   带缓冲区的 channel，定义了缓冲区大小，可以存储多个数据
     
@@ -92,7 +92,7 @@ func main() {
 
 ### 操作channel的3种方式
 
-操作 channel 一般有如下三种方式：
+<mark>操作 channel 一般有如下三种方式：</mark>
 
 1.  读 <-ch
 2.  写 ch<-
@@ -280,7 +280,7 @@ func worker(id int) {
 
 ### 判断 channel 是否关闭
 
-语法：
+<mark>语法：</mark>
 
 `v, ok := <-ch   `
 
@@ -335,9 +335,9 @@ func test(ch chan int) {
 
 range 可以遍历数组，map，字符串，channel等。
 
-一个发送者可以关闭 channel，表明没有任何数据发送给这个 channel 了。接收者也可以测试channel是否关闭，通过 `v, ok := <-ch` 表达式中的 ok 值来判断 channel 是否关闭。上一节已经说明 ok 为 false 时，表示 channel 没有接收任何数据，它已经关闭了。
+<mark>一个发送者可以关闭 channel，表明没有任何数据发送给这个 channel 了。接收者也可以测试channel是否关闭，通过 `v, ok := <-ch` 表达式中的 ok 值来判断 channel 是否关闭。</mark>上一节已经说明 ok 为 false 时，表示 channel 没有接收任何数据，它已经关闭了。
 
-> 注意：仅仅只能是发送者关闭一个 channel，而不能是接收者。给已经关闭的 channel 发送数据会导致 panic。
+> <mark>注意：仅仅只能是发送者关闭一个 channel，而不能是接收者。给已经关闭的 channel 发送数据会导致 panic。</mark>
 
 > Note: channels 不是文件，你通常不需要关闭他们。那什么时候需要关闭？当要告诉接收者没有值发送给 channel 了，这时就需要了。
 >
@@ -557,9 +557,9 @@ func main() {
 
 ### 2\. 同步的channel
 
-> **没有缓冲区**的 channel 可以作为同步数据的管道，起到同步数据的作用。
+> <mark>**没有缓冲区**的 channel 可以作为同步数据的管道，起到同步数据的作用。</mark>
 
-对没有缓冲区的 channel 操作时，发送的 goroutine 和接收的 goroutine 需要同时准备好，也就是发送和接收需要一一配对，才能完成发送和接收的操作。
+<mark>对没有缓冲区的 channel 操作时，发送的 goroutine 和接收的 goroutine 需要同时准备好</mark>，也就是发送和接收需要一一配对，才能完成发送和接收的操作。
 
 如果两方的 goroutine 没有同时准备好，channel 会导致先执行发送或接收的 goroutine 阻塞等待。这就是没有缓冲区的 channel 作为数据同步的作用。
 
@@ -584,7 +584,7 @@ func worker(done chan bool) {
 }
 
 func main() {
- done := make(chan bool, 1)
+ done := make(chan bool)
  go worker(done)
 
  <-done
@@ -595,9 +595,9 @@ func main() {
 
 ### 3\. 异步的channel
 
-有缓冲区的 channel 可以作为异步的 channel 使用。
+<mark>有缓冲区的 channel 可以作为异步的 channel 使用。</mark>
 
-有缓冲区的 channel 也有操作注意事项：
+<mark>有缓冲区的 channel 也有操作注意事项：</mark>
 
 > 1.  如果 channel 中没有值了，channel 为空了，那么接收者会被阻塞。
 >
@@ -637,7 +637,7 @@ func main() {
 
 ### 4.channel 超时处理
 
-channel 结合 time 实现超时处理。
+<mark>channel 结合 time 实现超时处理。</mark>
 
 当一个 channel 读取数据超过一定时间还没有数据到来时，可以得到超时通知，防止一直阻塞当前 goroutine。
 
@@ -819,7 +819,7 @@ end
 
 程序正常输出结果。
 
-对于没有缓冲区的 channel (unbuffered channel) 容易产生死锁的几个代码片段分析，总结下:
+<mark>对于没有缓冲区的 channel (unbuffered channel) 容易产生死锁的几个代码片段分析，总结下:</mark>
 
 > 1.  channel 要用 make 进行初始化操作
 >
@@ -873,7 +873,7 @@ func main() {
 
   
 
-有缓冲区的channel总结：
+<mark>有缓冲区的channel总结：</mark>
 
 > 1.  如果 channel 满了，发送者会阻塞
 >
