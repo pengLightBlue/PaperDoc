@@ -15,6 +15,8 @@
   * [channel设计原理](/ProjectDocs/channel设计原理.md)  
 * Chatbot
   * [美团智能客服核心技术与实践](/ProjectDocs/美团智能客服核心技术与实践.md)
+* Algorithm
+  * [字符串匹配的KMP算法](/ProjectDocs/字符串匹配的KMP算法.md)
 
   
   
