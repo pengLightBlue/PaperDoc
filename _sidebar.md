@@ -28,5 +28,6 @@
 * Algorithm
   * [字符串匹配的KMP算法](/ProjectDocs/字符串匹配的KMP算法.md)
   * [Trie树:如何实现搜索引擎的搜索关键词提示功能？](/ProjectDocs/Trie树：如何实现搜索引擎的搜索关键词提示功能？.md)  
-  
+* Prometheus
+  * [彻底理解Prometheus查询语法](/ProjectDocs/彻底理解Prometheus查询语法.md)  
   
