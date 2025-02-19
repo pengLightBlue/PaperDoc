@@ -1,10 +1,8 @@
-# 06 从ziplist到quicklist，再到listpack的启发
-
 在前面的【第 4 讲】，我介绍 Redis 优化设计数据结构来提升内存利用率的时候，提到可以使用压缩列表（ziplist）来保存数据。所以现在你应该也知道，ziplist 的最大特点，就是它被设计成一种内存紧凑型的数据结构，占用一块连续的内存空间，以达到节省内存的目的。
 
 但是，**在计算机系统中，任何一个设计都是有利有弊的**。对于 ziplist 来说，这个道理同样成立。
 
-虽然<mark> ziplist 节省了内存开销，可它也存在两个设计代价：一是不能保存过多的元素，否则访问性能会降低；二是不能保存过大的元素，否则容易导致内存重新分配，甚至可能引发连锁更新的问题</mark>。所谓的连锁更新，简单来说，就是 ziplist 中的每一项都要被重新分配内存空间，造成 ziplist 的性能降低。
+虽然 <mark>ziplist 节省了内存开销，可它也存在两个设计代价：一是不能保存过多的元素，否则访问性能会降低；二是不能保存过大的元素，否则容易导致内存重新分配，甚至可能引发连锁更新的问题</mark>。所谓的连锁更新，简单来说，就是 ziplist 中的每一项都要被重新分配内存空间，造成 ziplist 的性能降低。
 
 因此，针对 ziplist 在设计上的不足，Redis 代码在开发演进的过程中，新增设计了两种数据结构：**quicklist 和 listpack**。这两种数据结构的设计目标，就是尽可能地保持 ziplist 节省内存的优势，同时避免 ziplist 潜在的性能下降问题。
 
@@ -16,7 +14,7 @@
 
 ## ziplist 的不足
 
-你已经知道，一个 ziplist 数据结构在内存中的布局，就是一块连续的内存空间。这块空间的<mark>起始部分是大小固定的 10 字节元数据</mark>，其中记录了 ziplist 的总字节数、最后一个元素的偏移量以及列表元素的数量，而这 10 字节后面的内存空间则保存了实际的列表数据。在 ziplist 的最后部分，是一个 1 字节的标识（固定为 255），用来表示 ziplist 的结束，如<mark>下图所示</mark>：
+你已经知道，一个 ziplist 数据结构在内存中的布局，就是一块连续的内存空间。这块空间的<mark>起始部分是大小固定的 10 字节元数据</mark>，其中记录了 ziplist 的总字节数、最后一个元素的偏移量以及列表元素的数量，而这 10 字节后面的内存空间则保存了实际的列表数据。在 ziplist 的最后部分，是一个 1 字节的标识（固定为 255），用来表示 ziplist 的结束，<mark>如下图所示：</mark>
 
 ![](https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/Redis%20%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90%E4%B8%8E%E5%AE%9E%E6%88%98/assets/08fe01427f264234c59951c8293d466d-20221013234939-vxr28dd.jpg)
 
@@ -24,11 +22,11 @@
 
 ### 查找复杂度高
 
-因为 ziplist 头尾元数据的大小是固定的，并且在 ziplist 头部记录了最后一个元素的位置，所以，当在 ziplist 中<mark>查找第一个或最后一个元素的时候，就可以很快找到</mark>。
+因为 ziplist 头尾元数据的大小是固定的，并且在 ziplist 头部记录了最后一个元素的位置，所以，当在 ziplist 中查找第一个或最后一个元素的时候，就可以很快找到。
 
-但问题是，<mark>当要查找列表中间的元素时，ziplist 就得从列表头或列表尾遍历才行</mark>。而当 ziplist <mark>保存的元素过多时，查找中间数据的复杂度就增加了</mark>。更糟糕的是，如果 ziplist 里面保存的是字符串，ziplist 在查找某个元素时，还需要逐一判断元素的每个字符，这样又进一步增加了复杂度。
+但问题是，<mark>当要查找列表中间的元素时，ziplist 就得从列表头或列表尾遍历才行。而当 ziplist 保存的元素过多时，查找中间数据的复杂度就增加了</mark>。更糟糕的是，如果 ziplist 里面保存的是字符串，ziplist 在查找某个元素时，还需要逐一判断元素的每个字符，这样又进一步增加了复杂度。
 
-也正因为如此，我们在使用 ziplist 保存 Hash 或 Sorted Set 数据时，都会在 redis.conf 文件中，通过 hash-max-ziplist-entries 和 zset-max-ziplist-entries 两个参数，来<mark>控制保存在 ziplist 中的元素个数</mark>。
+也正因为如此，我们在使用 ziplist 保存 Hash 或 Sorted Set 数据时，<mark>都会在 redis.conf 文件中，通过 hash-max-ziplist-entries 和 zset-max-ziplist-entries 两个参数，来控制保存在 ziplist 中的元素个数。</mark>
 
 不仅如此，除了查找复杂度高以外，<mark>ziplist 在插入元素时，如果内存空间不够了，ziplist 还需要重新分配一块连续的内存空间</mark>，而这还会进一步引发连锁更新的问题。
 
@@ -38,21 +36,21 @@
 
 **\_\_ziplistInsert 函数首先会计算获得当前 ziplist 的长度**，这个步骤通过 ZIPLIST\_BYTES 宏定义就可以完成，如下所示。同时，该函数还声明了 reqlen 变量，用于记录插入元素后所需的新增空间大小。
 
-​    //获取当前ziplist长度curlen；声明reqlen变量，用来记录新插入元素所需的长度
-​    size_t curlen = intrev32ifbe(ZIPLIST_BYTES(zl)), reqlen;
+    //获取当前ziplist长度curlen；声明reqlen变量，用来记录新插入元素所需的长度
+    size_t curlen = intrev32ifbe(ZIPLIST_BYTES(zl)), reqlen;
 
 
 然后，**\_\_ziplistInsert 函数会判断当前要插入的位置是否是列表末尾**。如果不是末尾，那么就需要获取位于当前插入位置的元素的 prevlen 和 prevlensize。这部分代码如下所示：
 
-​    //如果插入的位置不是ziplist末尾，则获取前一项长度
-​       if (p[0] != ZIP_END) {
-​        ZIP_DECODE_PREVLEN(p, prevlensize, prevlen);
-​        } else {
-​           …
-​        }
+    //如果插入的位置不是ziplist末尾，则获取前一项长度
+       if (p[0] != ZIP_END) {
+        ZIP_DECODE_PREVLEN(p, prevlensize, prevlen);
+        } else {
+           …
+        }
 
 
-实际上，在 ziplist 中，<mark>每一个元素都会记录其**前一项的长度，也就是 prevlen**。然后，为了节省内存开销，ziplist 会使用不同的空间记录 prevlen，这个 **prevlen 空间大小就是 prevlensize**</mark>。
+实际上，在 ziplist 中，<mark>每一个元素都会记录其**前一项的长度，也就是 prevlen**。然后，为了节省内存开销，ziplist 会使用不同的空间记录 prevlen，这个 **prevlen 空间大小就是 prevlensize**。</mark>
 
 举个简单的例子，当在一个元素 A 前插入一个新的元素 B 时，A 的 prevlen 和 prevlensize 都要根据 B 的长度进行相应的变化。
 
@@ -73,31 +71,31 @@
 
 因此，为了保证 ziplist 有足够的内存空间，来保存插入元素以及插入位置元素的 prevlen 信息，**\_\_ziplistInsert 函数在获得插入位置元素的 prevlen 和 prevlensize 后，紧接着就会计算插入元素的长度**。
 
-现在我们已知，<mark>一个 ziplist 元素包括了 prevlen、encoding 和实际数据 data </mark>三个部分。所以，在计算插入元素的所需空间时，\_\_ziplistInsert 函数也会分别计算这三个部分的长度。这个计算过程一共可以分成四步来完成。
+现在我们已知，<mark>一个 ziplist 元素包括了 prevlen、encoding 和实际数据 data 三个部分</mark>。所以，在计算插入元素的所需空间时，\_\_ziplistInsert 函数也会分别计算这三个部分的长度。这个计算过程一共可以分成四步来完成。
 
 -   **第一步，计算实际插入元素的长度。**
 
 首先你要知道，这个计算过程和插入元素是整数还是字符串有关。\_\_ziplistInsert 函数会先调用 zipTryEncoding 函数，这个函数会判断插入元素是否为整数。如果是整数，就按照不同的整数大小，计算 encoding 和实际数据 data 各自所需的空间；如果是字符串，那么就先把字符串长度记录为所需的新增空间大小。这一过程的代码如下所示：
 
-​      if (zipTryEncoding(s,slen,&value,&encoding)) {
-​              reqlen = zipIntSize(encoding);
-​          } else {
-​              reqlen = slen;
-​          }
+      if (zipTryEncoding(s,slen,&value,&encoding)) {
+              reqlen = zipIntSize(encoding);
+          } else {
+              reqlen = slen;
+          }
 
 
 -   第二步，调用 zipStorePrevEntryLength 函数，将插入位置元素的 prevlen 也计算到所需空间中。
 
 这是因为在插入元素后，\_\_ziplistInsert 函数可能要为插入位置的元素分配新增空间。这部分代码如下所示：
 
-​    reqlen += zipStorePrevEntryLength(NULL,prevlen);
+    reqlen += zipStorePrevEntryLength(NULL,prevlen);
 
 
 -   第三步，调用 zipStoreEntryEncoding 函数，根据字符串的长度，计算相应 encoding 的大小。
 
 在刚才的第一步中，**ziplistInsert 函数对于字符串数据，只是记录了字符串本身的长度，所以在第三步中，**ziplistInsert 函数还会调用 zipStoreEntryEncoding 函数，根据字符串的长度来计算相应的 encoding 大小，如下所示：
 
-​    reqlen += zipStoreEntryEncoding(NULL,encoding,slen);
+    reqlen += zipStoreEntryEncoding(NULL,encoding,slen);
 
 
 好了，到这里，\_\_ziplistInsert 函数就已经在 reqlen 变量中，记录了插入元素的 prevlen 长度、encoding 大小，以及实际数据 data 的长度。这样一来，插入元素的整体长度就有了，这也是插入位置元素的 prevlen 所要记录的大小。
@@ -106,7 +104,7 @@
 
 最后，\_\_ziplistInsert 函数会调用 zipPrevLenByteDiff 函数，用来判断插入位置元素的 prevlen 和实际所需的 prevlen，这两者间的大小差别。这部分代码如下所示，prevlen 的大小差别是使用 nextdiff 来记录的：
 
-​    nextdiff = (p[0] != ZIP_END) ? zipPrevLenByteDiff(p,reqlen) : 0;
+    nextdiff = (p[0] != ZIP_END) ? zipPrevLenByteDiff(p,reqlen) : 0;
 
 
 那么在这里，如果 nextdiff 大于 0，就表明插入位置元素的空间不够，需要新增 nextdiff 大小的空间，以便能保存新的 prevlen。然后，**\_\_ziplistInsert 函数在新增空间时，就会调用 ziplistResize 函数，来重新分配 ziplist 所需的空间**。
@@ -117,7 +115,7 @@ ziplistResize 函数接收的参数分别是待重新分配的 ziplist 和重新
 
 这三个长度分别是 ziplist 现有大小（curlen）、待插入元素自身所需的新增空间（reqlen），以及插入位置元素 prevlen 所需的新增空间（nextdiff）。下面的代码显示了 ziplistResize 函数的调用和参数传递逻辑：
 
-​    zl = ziplistResize(zl,curlen+reqlen+nextdiff);
+    zl = ziplistResize(zl,curlen+reqlen+nextdiff);
 
 
 进一步，那么 ziplistResize 函数在获得三个长度总和之后，具体是如何扩容呢？
@@ -126,13 +124,13 @@ ziplistResize 函数接收的参数分别是待重新分配的 ziplist 和重新
 
 下面的代码显示了 ziplistResize 函数的部分实现，你可以看下。
 
-​    unsigned char *ziplistResize(unsigned char *zl, unsigned int len) {
-​        //对zl进行重新内存空间分配，重新分配的大小是len
-​        zl = zrealloc(zl,len);
-​        …
-​        zl[len-1] = ZIP_END;
-​        return zl;
-​    }
+    unsigned char *ziplistResize(unsigned char *zl, unsigned int len) {
+        //对zl进行重新内存空间分配，重新分配的大小是len
+        zl = zrealloc(zl,len);
+        …
+        zl[len-1] = ZIP_END;
+        return zl;
+    }
 
 
 好了，到这里，我们就了解了 ziplist 在新插入元素时，会计算其所需的新增空间，并进行重新分配。而当新插入的元素较大时，就会引起插入位置的元素 prevlensize 增加，进而就会导致插入位置的元素所占空间也增加。
@@ -159,37 +157,37 @@ quicklist 的设计，其实是结合了链表和 ziplist 各自的优势。简�
 
 我们来看下 quicklist 的数据结构，这是在[quicklist.h](https://github.com/redis/redis/tree/5.0/src/quicklist.h)文件中定义的，而 quicklist 的具体实现是在[quicklist.c](https://github.com/redis/redis/tree/5.0/src/quicklist.c)文件中。
 
-首先，quicklist 元素的定义，也就是 quicklistNode。因为 quicklist 是一个链表，所以每个 quicklistNode 中，都包含了分别指向它前序和后序节点的**指针*prev和*next**。同时，每个 quicklistNode 又是一个 ziplist，所以，在 quicklistNode 的结构体中，还有指向 ziplist 的**指针**\***zl**。
+首先，quicklist 元素的定义，也就是 quicklistNode。因为 quicklist 是一个链表，所以每个 quicklistNode 中，都包含了分别指向它前序和后序节点的**指针**\***_prev和_**\***next**。同时，每个 quicklistNode 又是一个 ziplist，所以，在 quicklistNode 的结构体中，还有指向 ziplist 的**指针**\***zl**。
 
 此外，quicklistNode 结构体中还定义了一些属性，比如 ziplist 的字节大小、包含的元素个数、编码格式、存储方式等。下面的代码显示了 quicklistNode 的结构体定义，你可以看下。
 
-​    typedef struct quicklistNode {
-​        struct quicklistNode *prev;     //前一个quicklistNode
-​        struct quicklistNode *next;     //后一个quicklistNode
-​        unsigned char *zl;              //quicklistNode指向的ziplist
-​        unsigned int sz;                //ziplist的字节大小
-​        unsigned int count : 16;        //ziplist中的元素个数 
-​        unsigned int encoding : 2;   //编码格式，原生字节数组或压缩存储
-​        unsigned int container : 2;  //存储方式
-​        unsigned int recompress : 1; //数据是否被压缩
-​        unsigned int attempted_compress : 1; //数据能否被压缩
-​        unsigned int extra : 10; //预留的bit位
-​    } quicklistNode;
+    typedef struct quicklistNode {
+        struct quicklistNode *prev;     //前一个quicklistNode
+        struct quicklistNode *next;     //后一个quicklistNode
+        unsigned char *zl;              //quicklistNode指向的ziplist
+        unsigned int sz;                //ziplist的字节大小
+        unsigned int count : 16;        //ziplist中的元素个数 
+        unsigned int encoding : 2;   //编码格式，原生字节数组或压缩存储
+        unsigned int container : 2;  //存储方式
+        unsigned int recompress : 1; //数据是否被压缩
+        unsigned int attempted_compress : 1; //数据能否被压缩
+        unsigned int extra : 10; //预留的bit位
+    } quicklistNode;
 
 
 了解了 quicklistNode 的定义，我们再来看下 quicklist 的结构体定义。
 
 quicklist 作为一个链表结构，在它的数据结构中，是定义了**整个 quicklist 的头、尾指针**，这样一来，我们就可以通过 quicklist 的数据结构，来快速定位到 quicklist 的链表头和链表尾。
 
-<mark>此外，quicklist 中还定义了 quicklistNode 的个数、所有 ziplist 的总元素个数等属性。quicklist 的结构定义如下所示：</mark>
+此外，<mark>quicklist 中还定义了 quicklistNode 的个数、所有 ziplist 的总元素个数等属性。quicklist 的结构定义如下所示：</mark>
 
-​    typedef struct quicklist {
-​        quicklistNode *head;      //quicklist的链表头
-​        quicklistNode *tail;      //quicklist的链表尾
-​        unsigned long count;     //所有ziplist中的总元素个数
-​        unsigned long len;       //quicklistNodes的个数
-​        ...
-​    } quicklist;
+    typedef struct quicklist {
+        quicklistNode *head;      //quicklist的链表头
+        quicklistNode *tail;      //quicklist的链表尾
+        unsigned long count;     //所有ziplist中的总元素个数
+        unsigned long len;       //quicklistNodes的个数
+        ...
+    } quicklist;
 
 
 然后，从 quicklistNode 和 quicklist 的结构体定义中，我们就能画出下面这张 quicklist 的示意图。
@@ -206,15 +204,15 @@ quicklist 作为一个链表结构，在它的数据结构中，是定义了**�
 
 下面代码显示了是否允许在当前 quicklistNode 插入数据的判断逻辑，你可以看下。
 
-​    unsigned int new_sz = node->sz + sz + ziplist_overhead;
-​    if (likely(_quicklistNodeSizeMeetsOptimizationRequirement(new_sz, fill)))
-​        return 1;
-​    else if (!sizeMeetsSafetyLimit(new_sz))
-​        return 0;
-​    else if ((int)node->count < fill)
-​        return 1;
-​    else
-​        return 0;
+    unsigned int new_sz = node->sz + sz + ziplist_overhead;
+    if (likely(_quicklistNodeSizeMeetsOptimizationRequirement(new_sz, fill)))
+        return 1;
+    else if (!sizeMeetsSafetyLimit(new_sz))
+        return 0;
+    else if ((int)node->count < fill)
+        return 1;
+    else
+        return 0;
 
 
 这样一来，quicklist 通过控制每个 quicklistNode 中，ziplist 的大小或是元素个数，就有效减少了在 ziplist 中新增或修改元素后，发生连锁更新的情况，从而提供了更好的访问性能。
@@ -231,18 +229,18 @@ lpNew 函数创建了一个空的 listpack，一开始分配的大小是 LP\_HDR
 
 此外，listpack 的最后一个字节是用来标识 listpack 的结束，其默认值是宏定义 LP\_EOF。和 ziplist 列表项的结束标记一样，LP\_EOF 的值也是 255。
 
-​    unsigned char *lpNew(void) {
-​        //分配LP_HRD_SIZE+1
-​        unsigned char *lp = lp_malloc(LP_HDR_SIZE+1);
-​        if (lp == NULL) return NULL;
-​        //设置listpack的大小
-​        lpSetTotalBytes(lp,LP_HDR_SIZE+1);
-​        //设置listpack的元素个数，初始值为0
-​        lpSetNumElements(lp,0);
-​        //设置listpack的结尾标识为LP_EOF，值为255
-​        lp[LP_HDR_SIZE] = LP_EOF;
-​        return lp;
-​    }
+    unsigned char *lpNew(void) {
+        //分配LP_HRD_SIZE+1
+        unsigned char *lp = lp_malloc(LP_HDR_SIZE+1);
+        if (lp == NULL) return NULL;
+        //设置listpack的大小
+        lpSetTotalBytes(lp,LP_HDR_SIZE+1);
+        //设置listpack的元素个数，初始值为0
+        lpSetNumElements(lp,0);
+        //设置listpack的结尾标识为LP_EOF，值为255
+        lp[LP_HDR_SIZE] = LP_EOF;
+        return lp;
+    }
 
 
 你可以看看下面这张图，展示的就是大小为 LP\_HDR\_SIZE 的 listpack 头和值为 255 的 listpack 尾。当有新元素插入时，该元素会被插在 listpack 头和尾之间。
@@ -261,12 +259,12 @@ lpNew 函数创建了一个空的 listpack，一开始分配的大小是 LP\_HDR
 
 我们先来看下 listpack 元素的编码类型。如果你看了 listpack.c 文件，你会发现该文件中有大量类似 LP\_ENCODING**XX\_BIT\_INT 和 LP\_ENCODING**XX\_BIT\_STR 的宏定义，如下所示：
 
-​    #define LP_ENCODING_7BIT_UINT 0
-​    #define LP_ENCODING_6BIT_STR 0x80
-​    #define LP_ENCODING_13BIT_INT 0xC0
-​    ...
-​    #define LP_ENCODING_64BIT_INT 0xF4
-​    #define LP_ENCODING_32BIT_STR 0xF0
+    #define LP_ENCODING_7BIT_UINT 0
+    #define LP_ENCODING_6BIT_STR 0x80
+    #define LP_ENCODING_13BIT_INT 0xC0
+    ...
+    #define LP_ENCODING_64BIT_INT 0xF4
+    #define LP_ENCODING_32BIT_STR 0xF0
 
 
 这些宏定义其实就对应了 listpack 的元素编码类型。具体来说，<mark>**listpack 元素会对不同长度的整数和字符串进行编码**</mark>，这里我们分别来看下。
@@ -305,50 +303,50 @@ lpNew 函数创建了一个空的 listpack，一开始分配的大小是 LP\_HDR
 
 **当应用程序从左向右正向查询 listpack 时**，我们可以先调用 lpFirst 函数。该函数的参数是指向 listpack 头的指针，它在执行时，会让指针向右偏移 LP\_HDR\_SIZE 大小，也就是跳过 listpack 头。你可以看下 lpFirst 函数的代码，如下所示：
 
-​    unsigned char *lpFirst(unsigned char *lp) {
-​        lp += LP_HDR_SIZE; //跳过listpack头部6个字节
-​        if (lp[0] == LP_EOF) return NULL;  //如果已经是listpack的末尾结束字节，则返回NULL
-​        return lp;
-​    }
+    unsigned char *lpFirst(unsigned char *lp) {
+        lp += LP_HDR_SIZE; //跳过listpack头部6个字节
+        if (lp[0] == LP_EOF) return NULL;  //如果已经是listpack的末尾结束字节，则返回NULL
+        return lp;
+    }
 
 
 然后，再调用 lpNext 函数，该函数的参数包括了指向 listpack 某个列表项的指针。lpNext 函数会进一步调用 lpSkip 函数，并传入当前列表项的指针，如下所示：
 
-​    unsigned char *lpNext(unsigned char *lp, unsigned char *p) {
-​        ...
-​        p = lpSkip(p);  //调用lpSkip函数，偏移指针指向下一个列表项
-​        if (p[0] == LP_EOF) return NULL;
-​        return p;
-​    }
+    unsigned char *lpNext(unsigned char *lp, unsigned char *p) {
+        ...
+        p = lpSkip(p);  //调用lpSkip函数，偏移指针指向下一个列表项
+        if (p[0] == LP_EOF) return NULL;
+        return p;
+    }
 
 
 最后，lpSkip 函数会先后调用 lpCurrentEncodedSize 和 lpEncodeBacklen 这两个函数。
 
 lpCurrentEncodedSize 函数是<mark>根据当前列表项第 1 个字节的取值，来计算当前项的编码类型，并根据编码类型，计算当前项编码类型和实际数据的总长度</mark>。然后，lpEncodeBacklen 函数会<mark>根据编码类型和实际数据的长度之和，进一步计算列表项最后一部分 entry-len 本身的长度。</mark>
 
-这样一来，lpSkip 函数就知道当前项的编码类型、实际数据和 entry-len 的总长度了，也<mark>就可以将当前项指针向右偏移相应的长度，从而实现查到下一个列表项的目的。</mark>
+这样一来，lpSkip 函数就知道当前项的编码类型、实际数据和 entry-len 的总长度了，也就<mark>可以将当前项指针向右偏移相应的长度，从而实现查到下一个列表项的目的。</mark>
 
 下面代码展示了 lpEncodeBacklen 函数的基本计算逻辑，你可以看下。
 
-​    unsigned long lpEncodeBacklen(unsigned char *buf, uint64_t l) {
-​        //编码类型和实际数据的总长度小于等于127，entry-len长度为1字节
-​        if (l <= 127) {
-​            ...
-​            return 1;
-​        } else if (l < 16383) { //编码类型和实际数据的总长度大于127但小于16383，entry-len长度为2字节
-​           ...
-​            return 2;
-​        } else if (l < 2097151) {//编码类型和实际数据的总长度大于16383但小于2097151，entry-len长度为3字节
-​           ...
-​            return 3;
-​        } else if (l < 268435455) { //编码类型和实际数据的总长度大于2097151但小于268435455，entry-len长度为4字节
-​            ...
-​            return 4;
-​        } else { //否则，entry-len长度为5字节
-​           ...
-​            return 5;
-​        }
-​    }
+    unsigned long lpEncodeBacklen(unsigned char *buf, uint64_t l) {
+        //编码类型和实际数据的总长度小于等于127，entry-len长度为1字节
+        if (l <= 127) {
+            ...
+            return 1;
+        } else if (l < 16383) { //编码类型和实际数据的总长度大于127但小于16383，entry-len长度为2字节
+           ...
+            return 2;
+        } else if (l < 2097151) {//编码类型和实际数据的总长度大于16383但小于2097151，entry-len长度为3字节
+           ...
+            return 3;
+        } else if (l < 268435455) { //编码类型和实际数据的总长度大于2097151但小于268435455，entry-len长度为4字节
+            ...
+            return 4;
+        } else { //否则，entry-len长度为5字节
+           ...
+            return 5;
+        }
+    }
 
 
 我也画了一张图，展示了从左向右遍历 listpack 的基本过程，你可以再回顾下。
@@ -359,7 +357,7 @@ lpCurrentEncodedSize 函数是<mark>根据当前列表项第 1 个字节的取�
 
 首先，我们<mark>根据 listpack 头中记录的 listpack 总长度，就可以直接定位到 listapck 的尾部结束标记</mark>。然后，我们可以调用 lpPrev 函数，该函数的参数包括指向某个列表项的指针，并返回指向当前列表项前一项的指针。
 
-lpPrev 函数中的关键一步就是调用 lpDecodeBacklen 函数。lpDecodeBacklen 函数会<mark>从右向左，逐个字节地读取当前列表项的 entry-len</mark>。
+lpPrev 函数中的关键一步就是调用 lpDecodeBacklen 函数。lpDecodeBacklen 函数会<mark>从右向左，逐个字节地读取当前列表项的 entry-len。</mark>
 
 那么，**lpDecodeBacklen 函数如何判断 entry-len 是否结束了呢？**
 
@@ -368,7 +366,7 @@ lpPrev 函数中的关键一步就是调用 lpDecodeBacklen 函数。lpDecodeBac
 -   最高位为 1，表示 entry-len 还没有结束，当前字节的左边字节仍然表示 entry-len 的内容；
 -   最高位为 0，表示当前字节已经是 entry-len 最后一个字节了。
 
-<mark>而 entry-len 每个字节的低 7 位，则记录了实际的长度信息。这里你需要注意的是，entry-len 每个字节的低 7 位采用了**大端模式存储**，也就是说，entry-len 的低位字节保存在内存高地址上。</mark>
+而 <mark>entry-len 每个字节的低 7 位，则记录了实际的长度信息。这里你需要注意的是，entry-len 每个字节的低 7 位采用了**大端模式存储**，也就是说，entry-len 的低位字节保存在内存高地址上。</mark>
 
 我画了下面这张图，展示了 entry-len 这种特别的编码方式，你可以看下。
 
@@ -395,3 +393,5 @@ lpPrev 函数中的关键一步就是调用 lpDecodeBacklen 函数。lpDecodeBac
 ## 每课一问
 
 ziplist 会使用 zipTryEncoding 函数计算插入元素所需的新增内存空间，假设插入的一个元素是整数，你知道 ziplist 能支持的最大整数是多大吗？
+
+欢迎在留言区分享你的答案和思考过程，如果觉得有收获，也欢迎你把今天的内容分享给更多的朋友。
