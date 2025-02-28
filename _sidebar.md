@@ -8,6 +8,7 @@
   * [为什么MySQL采用B+树作为索引](/ProjectDocs/mysql/为什么MySQL采用B+树作为索引.md)
   * [MySQL单表不能超过2000W行吗](/ProjectDocs/mysql/MySQL单表不能超过2000W行吗.md)
 * Redis
+  * [Redis常见面试题](/ProjectDocs/redis/redis常见面试题.md)
   * 数据结构
     * [Redis常见数据类型和应用场景](/ProjectDocs/redis/Redis常见数据类型和应用场景.md)
     * [Redis数据结构](/ProjectDocs/redis/Redis数据结构.md)
@@ -21,8 +22,13 @@
     * [AOF持久化是怎么实现的](/ProjectDocs/redis/AOF持久化是怎么实现的.md)
     * [RDB快照是怎么实现的](/ProjectDocs/redis/RDB快照是怎么实现的.md)
     * [Redis大Key对持久化有什么影响](/ProjectDocs/redis/Redis大Key对持久化有什么影响.md)    
+  * [Redis过期删除策略和内存淘汰策略有什么区别](/ProjectDocs/redis/Redis过期删除策略和内存淘汰策略有什么区别.md)    
+  * 高可用
+    * [主从复制是怎么实现的](/ProjectDocs/redis/主从复制是怎么实现的.md)
+    * [为什么要有哨兵](/ProjectDocs/redis/为什么要有哨兵.md)
 * Network
   * HTTP
+    * [HTTP常见面试题](/ProjectDocs/network/HTTP常见面试题.md) 
     * [HTTP1.1如何优化](/ProjectDocs/network/HTTP1.1如何优化.md) 
     * [HTTPS RSA握手解析](/ProjectDocs/network/HTTPS-RSA握手解析.md) 
     * [HTTPS ECDHE握手解析](/ProjectDocs/network/HTTPS-ECDHE握手解析.md) 
@@ -31,6 +37,9 @@
     * [HTTP3强势来袭](/ProjectDocs/network/HTTP3强势来袭.md) 
     * [既然有HTTP协议，为什么还要有RPC](/ProjectDocs/network/既然有HTTP协议，为什么还要有RPC.md) 
     * [既然有HTTP协议，为什么还要有WebSocket](/ProjectDocs/network/既然有HTTP协议，为什么还要有WebSocket.md)  
+  * TCP
+    * [TCP三次握手与四次挥手](/ProjectDocs/network/TCP三次握手与四次挥手.md) 
+    * [TCP重传、滑动窗口、流量控制、拥塞控制](/ProjectDocs/network/TCP重传、滑动窗口、流量控制、拥塞控制.md) 
   * 底层原理
     * [深入操作系统，一文搞懂Socket到底是什么](/ProjectDocs/network/深入操作系统，一文搞懂Socket到底是什么.md)
     * [什么是零拷贝？](/ProjectDocs/network/什么是零拷贝？.md)
