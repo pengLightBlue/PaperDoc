@@ -26,6 +26,9 @@
   * 高可用
     * [主从复制是怎么实现的](/ProjectDocs/redis/主从复制是怎么实现的.md)
     * [为什么要有哨兵](/ProjectDocs/redis/为什么要有哨兵.md)
+  * 缓存    
+    * [什么是缓存雪崩、击穿、穿透](/ProjectDocs/redis/什么是缓存雪崩、击穿、穿透.md)    
+    * [数据库和缓存如何保证一致性](/ProjectDocs/redis/数据库和缓存如何保证一致性.md)
 * Network
   * HTTP
     * [HTTP常见面试题](/ProjectDocs/network/HTTP常见面试题.md) 
