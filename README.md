@@ -29,7 +29,11 @@
   * [Redis过期删除策略和内存淘汰策略有什么区别](/ProjectDocs/redis/Redis过期删除策略和内存淘汰策略有什么区别.md)        
   * 高可用
     * [主从复制是怎么实现的](/ProjectDocs/redis/主从复制是怎么实现的.md)
+    * [Redis主从同步与故障切换，有哪些坑](/ProjectDocs/redis/Redis主从同步与故障切换，有哪些坑.md)
     * [为什么要有哨兵](/ProjectDocs/redis/为什么要有哨兵.md)
+    * [切片集群：数据增多了，是该加内存还是加实例](/ProjectDocs/redis/切片集群：数据增多了，是该加内存还是加实例.md)
+    * [Redis集群方案选择](/ProjectDocs/redis/Redis集群方案选择.md)
+    * [通信开销：限制Redis Cluster规模的关键因素](/ProjectDocs/redis/通信开销：限制Redis-Cluster规模的关键因素.md)
   * 缓存    
     * [什么是缓存雪崩、击穿、穿透](/ProjectDocs/redis/什么是缓存雪崩、击穿、穿透.md)
     * [数据库和缓存如何保证一致性](/ProjectDocs/redis/数据库和缓存如何保证一致性.md)
