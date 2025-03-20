@@ -1,4 +1,4 @@
-![智能会话机器人：SaaS 平台的设计与思考](https://static001.geekbang.org/infoq/e0/e086b55a5ab32cae2717f7b90140e832.png)
+![智能会话机器人：SaaS 平台的设计与思考](../images/saas/e086b55a5ab32cae2717f7b90140e832.png)
 
 # 1\. 前言
 
@@ -10,9 +10,7 @@
 
 ## 2.1. 智能会话机器人的分类
 
-![](https://static001.geekbang.org/infoq/ab/ab666bf6a151d09bbbef9d4ee5aea8b8.png)
-
-智能会话机器人类型
+![智能会话机器人类型](../images/saas/ab666bf6a151d09bbbef9d4ee5aea8b8.png)
 
 智能会话机器人按照对话轮次来划分，可以分为单轮对话机器人和多轮对话机器人；按照知识领域来划分，可以分为限定域机器人和开放域机器人；按照任务类型来划分，可以分为任务型机器人、问答型机器人、闲聊型机器人和融合型机器人。
 
@@ -28,9 +26,7 @@
 
 ## 2.2. 任务型机器人交互模型
 
-![](https://static001.geekbang.org/infoq/61/61e146c49c3ded6c6e5a35365e75a53a.png)
-
-任务型机器人交互模型
+![任务型机器人交互模型](../images/saas/61e146c49c3ded6c6e5a35365e75a53a.png)
 
 企业应用中最常见的需求是任务型机器人，上图是任务型机器人经典的交互模型。其中红色框为文字语音转换部分，这里暂不作讨论。
 
@@ -72,9 +68,7 @@
 
 ## 2.3. 组件集成（pipeline）
 
-![](https://static001.geekbang.org/infoq/1f/1fa2dc2c01e4bd60c70c32c1ab8bda18.png)
-
-pipeline
+![pipeline](../images/saas/1fa2dc2c01e4bd60c70c32c1ab8bda18.png)
 
 任务型机器人的系统设计中，通常采用 pipeline 方式来集成各个组件。
 
@@ -82,23 +76,17 @@ pipeline 的组件构成根据采用的方法不同而不同。有可能整个 p
 
 某些情况下，为了提高响应速度或实现条件判断，还可能是一个分支流（如下图所示）。
 
-![](https://static001.geekbang.org/infoq/dd/ddef0d182384d45b03313c0426075273.png)
-
-pipeline-并行
+![pipeline-并行](../images/saas/ddef0d182384d45b03313c0426075273.png)
 
 总之，pipeline 中组件构成是不固定的，从系统设计的角度来看，可以将 pipeline 看成是一个整体模块（如下图所示）。
 
-![](https://static001.geekbang.org/infoq/5d/5dabc1117382688e04f4e34902a71ad4.png)
-
-pipeline-整体
+![pipeline-整体](../images/saas/5dabc1117382688e04f4e34902a71ad4.png)
 
 这种情况下，问答机器人、闲聊机器人、融合型机器人和任务型机器人都是接受输入返回输出。即无论何种类型，Chatbot 的外层结构保持不变，变化的只是 pipeline 的内部结构。再进一步抽象，其实可以通过在配置界面拖拽相关组件连接成 pipeline 来创建新的会话机器人类型。
 
 ## 2.4. Chatbot 基本架构
 
-![](https://static001.geekbang.org/infoq/04/04cce44d6764c577e91c084fee85e0b0.png)
-
-Chatbot基本架构
+![Chatbot基本架构](../images/saas/04cce44d6764c577e91c084fee85e0b0.png)
 
 上图中蓝色部分是内部组件，灰色部分是外部服务。
 
@@ -146,9 +134,7 @@ Chatbot基本架构
 
 > 名词解释：PTM（Pre-trained Model）预训练模型
 
-![](https://static001.geekbang.org/infoq/7e/7e0d61517714954acfb24697bb6ccea9.png)
-
-模型训练
+![模型训练](../images/saas/7e0d61517714954acfb24697bb6ccea9.png)
 
 如上图所示，有四个主要的组件：
 
@@ -190,9 +176,7 @@ Chatbot基本架构
 
 有哪些用户会与 SaaS 平台发生交互呢？这里简单梳理了下，主要的用户类型如下图所示。
 
-![](https://static001.geekbang.org/infoq/2a/2a051366f174a64cc81c4f59e56f08b7.png)
-
-系统用户
+![系统用户](../images/saas/2a051366f174a64cc81c4f59e56f08b7.png)
 
 可能还会有财务人员、营销人员……等其他用户，对于这些更细化的角色和权限，后续根据业务需求通过 RBAC 模型来扩展即可。
 
@@ -200,9 +184,7 @@ Chatbot基本架构
 
 上一小节我们粗粒度地列出了用户角色类型，那么，他们各自都会有哪些核心功能需求呢？
 
-![](https://static001.geekbang.org/infoq/8e/8e9f628caaa2ef4d6475ac4819195e67.png)
-
-系统用例
+![系统用例](../images/saas/8e9f628caaa2ef4d6475ac4819195e67.png)
 
 > **说明**：
 >
@@ -272,9 +254,7 @@ Chatbot基本架构
 
 ### 3.2.1. 整体架构
 
-![](https://static001.geekbang.org/infoq/dd/dd8562e4f59a22480de4125d126ba0a5.png)
-
-Chatbot SaaS 平台整体架构
+![Chatbot SaaS 平台整体架构](../images/saas/dd8562e4f59a22480de4125d126ba0a5.png)
 
 如上图所示，这是一个标准的 DDD 四层模型（4 层 + 1 监控）。
 
@@ -290,9 +270,7 @@ Chatbot SaaS 平台整体架构
 
 ### 3.2.2. 组件概览
 
-![](https://static001.geekbang.org/infoq/6e/6e9bba265859f836a38ab3205e9185e7.png)
-
-Chatbot SaaS 平台组件概览
+![Chatbot SaaS 平台组件概览](../images/saas/6e9bba265859f836a38ab3205e9185e7.png)
 
 -   **接入层**
 
@@ -342,9 +320,7 @@ Chatbot SaaS 平台组件概览
 
 ### 3.2.3. 组件交互
 
-![](https://static001.geekbang.org/infoq/26/2654c7baa5101e7c235a9551b6d60897.png)
-
-Chatbot SaaS 平台组件交互
+![Chatbot SaaS 平台组件交互](../images/saas/2654c7baa5101e7c235a9551b6d60897.png)
 
 如上图所示，红色线为会话线，绿色线为训练线，橙色线为测试线。
 
@@ -414,9 +390,7 @@ Chatbot SaaS 平台组件交互
 
 -   最后，还应该根据领域来配置。如前所述，为了提高算法性能，通常会采用领域相关的语料进行预训练，一个大的领域下还可以继续细分子领域。通常来说领域数据越多分得越细则模型的算法性能会越好，领域数据和模型是 Chatbot SaaS 平台的核心竞争力之一。
 
-![](https://static001.geekbang.org/infoq/ad/ad2074b35c47e1340fb625574143ca74.png)
-
-Chatbot创建-配置维度
+![Chatbot创建-配置维度](../images/saas/ad2074b35c47e1340fb625574143ca74.png)
 
 在 SaaS 平台的管理界面，租户首先可以根据自己的业务场景选择不同的维度进行组合配置，然后编排会话流程和上传语料数据，最终构建得到属于自己的 Chatbot 类型。SaaS 平台为该 Chatbot 类型分配 ID 标识，最终用户携带这个 ID 访问会话网关，Router 可以根据 ID 路由消息到该 Chatbot 类型的运行实例。
 
@@ -426,17 +400,12 @@ Chatbot创建-配置维度
 
 什么情况下由机器人响应消息？什么情况下由人工客服响应消息？这是一个需要定义的产品需求。每个租户的需求可能是不同的，SaaS 平台可以预先设定一些切换模式，然后再根据租户需求做定制化的方案。
 
-![](https://static001.geekbang.org/infoq/dd/ddbc03e5c6a33f96c3997c127ee1fefc.png)
+![人工客服切换-场景分析](../images/saas/ddbc03e5c6a33f96c3997c127ee1fefc.png)
 
-人工客服切换-场景分析
-
-  
 
 -   **技术方案**
 
-![](https://static001.geekbang.org/infoq/09/099ad290707505c4a369cc509a330142.png)
-
-人工客服切换技术方案
+![人工客服切换技术方案](../images/saas/099ad290707505c4a369cc509a330142.png)
 
 > **说明**：
 >
@@ -468,9 +437,7 @@ Chatbot创建-配置维度
 
 基本业务流程如下图所示，Router 负责全局设定，Chatbot 负责个性化的设定。
 
-![](https://static001.geekbang.org/infoq/59/59bf4beac5ae13c20e5b5688571bac15.png)
-
-人工客服支持-业务流程
+![人工客服支持-业务流程](../images/saas/59bf4beac5ae13c20e5b5688571bac15.png)
 
 > **备注**：
 >
