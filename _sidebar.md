@@ -38,6 +38,9 @@
     * [什么是缓存雪崩、击穿、穿透](/ProjectDocs/redis/什么是缓存雪崩、击穿、穿透.md)    
     * [数据库和缓存如何保证一致性](/ProjectDocs/redis/数据库和缓存如何保证一致性.md)
   * [Redis分布式锁](/ProjectDocs/redis/Redis分布式锁.md)        
+* Kafka
+  * [Kafka常见问题总结](ProjectDocs/Kafka/Kafka常见问题总结.md)  
+  * [Kafka精选知识点](ProjectDocs/Kafka/Kafka精选知识点.md)
 * Network
   * Auth
     * [cookie、session、token、jwt的区别](ProjectDocs/network/auth/cookie、session、token、jwt的区别.md) 
