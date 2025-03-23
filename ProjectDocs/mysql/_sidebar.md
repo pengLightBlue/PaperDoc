@@ -9,4 +9,5 @@
   * [MySQL单表不能超过2000W行吗](/ProjectDocs/mysql/MySQL单表不能超过2000W行吗.md)
   * [事务隔离级别是怎么实现的](ProjectDocs/mysql/事务隔离级别是怎么实现的.md)
   * [MySQL可重复读隔离级别，完全解决幻读了吗](ProjectDocs/mysql/MySQL可重复读隔离级别，完全解决幻读了吗.md)
+  * [MySQL日志：undo log、redo log、binlog有什么用](ProjectDocs/mysql/MySQL日志：undo-log、redo-log、binlog有什么用.md)
   
