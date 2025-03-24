@@ -68,6 +68,7 @@
     * [高性能网络模式：Reactor和Proactor](/ProjectDocs/network/高性能网络模式：Reactor和Proactor.md)
     * [什么是一致性哈希？](/ProjectDocs/network/什么是一致性哈希？.md)  
 * Golang
+  * [Java跟Go对比](ProjectDocs/golang/Java跟Go对比.md) 
   * [golang中channel的详细使用、使用注意事项及死锁分析](/ProjectDocs/golang/golang中channel的详细使用、使用注意事项及死锁分析.md)  
   * [channel设计原理](/ProjectDocs/golang/channel设计原理.md)  
   * [select使用与底层原理](ProjectDocs/golang/select使用与底层原理.md)    
