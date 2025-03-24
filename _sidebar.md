@@ -7,6 +7,7 @@
   * [从数据页的角度看B+树](/ProjectDocs/mysql/从数据页的角度看B+树.md)
   * [为什么MySQL采用B+树作为索引](/ProjectDocs/mysql/为什么MySQL采用B+树作为索引.md)
   * [MySQL单表不能超过2000W行吗](/ProjectDocs/mysql/MySQL单表不能超过2000W行吗.md)
+  * [索引失效有哪些](ProjectDocs/mysql/索引失效有哪些.md)
   * [事务隔离级别是怎么实现的](ProjectDocs/mysql/事务隔离级别是怎么实现的.md)
   * [MySQL可重复读隔离级别，完全解决幻读了吗](ProjectDocs/mysql/MySQL可重复读隔离级别，完全解决幻读了吗.md)
   * [MySQL有哪些锁](ProjectDocs/mysql/MySQL有哪些锁.md)
@@ -77,6 +78,7 @@
   * [Golang调度器GMP原理与调度全分析](ProjectDocs/golang/Golang调度器GMP原理与调度全分析.md)  
   * [Go内存分配](ProjectDocs/golang/Go内存分配.md)  
   * [Golang三色标记混合写屏障GC模式全分析](ProjectDocs/golang/Golang三色标记混合写屏障GC模式全分析.md)  
+  * [Go逃逸分析](ProjectDocs/golang/go逃逸分析.md)  
 * Chatbot
   * [美团智能客服核心技术与实践](/ProjectDocs/chatbot/美团智能客服核心技术与实践.md)
 * Saas

@@ -8,3 +8,4 @@
   * [Golang调度器GMP原理与调度全分析](ProjectDocs/golang/Golang调度器GMP原理与调度全分析.md)  
   * [Go内存分配](ProjectDocs/golang/Go内存分配.md)  
   * [Golang三色标记混合写屏障GC模式全分析](ProjectDocs/golang/Golang三色标记混合写屏障GC模式全分析.md)  
+  * [Go逃逸分析](ProjectDocs/golang/go逃逸分析.md)  
