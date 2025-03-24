@@ -173,7 +173,7 @@ func makechan(t *chantype, size int) *hchan {
 
 在函数的最后会统一更新 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 的 `elemsize`、`elemtype` 和 `dataqsiz` 几个字段。
 
-## 6.4.4 发送数据 [#](https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-channel/#644-%e5%8f%91%e9%80%81%e6%95%b0%e6%8d%ae)
+## 6.4.4 发送数据
 
 当我们想要向 Channel 发送数据时，就需要使用 `ch <- i` 语句，编译器会将它解析成 `OSEND` 节点并在 [`cmd/compile/internal/gc.walkexpr`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkexpr) 中转换成 [`runtime.chansend1`](https://draveness.me/golang/tree/runtime.chansend1)：
 
