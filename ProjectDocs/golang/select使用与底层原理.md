@@ -2,9 +2,9 @@
 
 ## 1. select的使用
 
-> select 是 Go 提供的 IO 多路复用机制，可以用多个 case 同时监听多个 channl 的读写状态：
+> select 是 Go 提供的 IO 多路复用机制，可以用多个 case 同时监听多个 channel 的读写状态：
 
-- case: 可以监听 channl 的读写信号
+- case: 可以监听 channel 的读写信号
 - default：声明默认操作，有该字段的 select 不会阻塞
 
 ```go
@@ -20,12 +20,22 @@ default:
 
 ## 2. 底层原理
 
-1. 每一个 case 对应的 channl 都会被封装到一个结构体中；
-2. 当第一次执行到 select 时，会锁住所有的 channl 并且，打乱 case 结构体的顺序；
+1. 每一个 case 对应的 channel 都会被封装到一个结构体中；
+2. 当第一次执行到 select 时，会锁住所有的 channel 并且，打乱 case 结构体的顺序；
 3. 按照打乱的顺序遍历，如果有就绪的信号，就直接走对应 case 的代码段，之后跳出 select；
 4. 如果没有就绪的代码段，但是有 default 字段，那就走 default 的代码段，之后跳出 select；
-5. 如果没有 default，那就将当前 goroutine 加入所有 channl 的对应等待队列；
-6. 当某一个等待队列就绪时，再次锁住所有的 channl，遍历一遍，将所有等待队列中的 goroutine 取出，之后执行就绪的代码段，跳出select。
+5. 若没有 `case` 就绪且无 `default`，当前 goroutine 会被挂起，并加入所有涉及通道的等待队列。
+6. 当任意一个通道就绪时，唤醒该 goroutine，重新检查所有 `case`。再次锁住所有的 channel，遍历一遍，将所有等待队列中的 goroutine 取出，之后执行就绪的代码段，跳出select。
+
+> 怎么判断case是否就绪？
+>
+> - **接收操作就绪条件**：
+>   - 通道非 `nil`，且（缓冲区有数据 | 有发送者在等待 | 通道已关闭）。
+> - **发送操作就绪条件**：
+>   - 通道非 `nil`，且（缓冲区未满 | 有接收者在等待）。
+> - **优先级**：
+>   - 若多个 `case` 同时就绪，随机选择一个执行。
+>   - `default` 仅在所有 `case` 未就绪时执行。
 
 ## 3. 数据结构
 
