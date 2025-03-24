@@ -46,6 +46,8 @@
   * [Kafka是什么](ProjectDocs/Kafka/Kafka是什么.md)
   * [Kafka常见问题总结](ProjectDocs/Kafka/Kafka常见问题总结.md)  
   * [Kafka精选知识点](ProjectDocs/Kafka/Kafka精选知识点.md)
+* Zookeeper
+  * [Zookeeper知识点](ProjectDocs/zookeeper/zookeeper知识点.md)  
 * ES
   * [elasticSearch是什么？工作原理是怎么样的？](ProjectDocs/es/elasticSearch是什么？工作原理是怎么样的.md)
   * [es知识点总结](ProjectDocs/es/es知识点总结.md)  
