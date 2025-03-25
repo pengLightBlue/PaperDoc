@@ -12,4 +12,5 @@
   * [MySQL可重复读隔离级别，完全解决幻读了吗](ProjectDocs/mysql/MySQL可重复读隔离级别，完全解决幻读了吗.md)
   * [MySQL有哪些锁](ProjectDocs/mysql/MySQL有哪些锁.md)
   * [MySQL日志：undo log、redo log、binlog有什么用](ProjectDocs/mysql/MySQL日志：undo-log、redo-log、binlog有什么用.md)
+  * [MySQL分库分表策略](ProjectDocs/mysql/MySQL分库分表策略.md)
   
