@@ -13,4 +13,5 @@
   * [MySQL有哪些锁](ProjectDocs/mysql/MySQL有哪些锁.md)
   * [MySQL日志：undo log、redo log、binlog有什么用](ProjectDocs/mysql/MySQL日志：undo-log、redo-log、binlog有什么用.md)
   * [MySQL分库分表策略](ProjectDocs/mysql/MySQL分库分表策略.md)
+  * [揭开Buffer Pool的面纱](ProjectDocs/mysql/MySQL缓冲池.md)
   
