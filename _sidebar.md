@@ -119,3 +119,5 @@
   * [Transformer模型详解](ProjectDocs/ai/Transformer模型详解.md)
 * Design pattern
   * [常用设计模式](ProjectDocs/designpattern/常用设计模式.md)  
+* Distributed system
+  * [分布式知识点](ProjectDocs/distributed-system/分布式知识点.md)  
