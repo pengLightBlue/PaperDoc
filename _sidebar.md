@@ -74,6 +74,7 @@
     * [什么是一致性哈希？](/ProjectDocs/network/什么是一致性哈希？.md)  
 * Golang
   * [Java跟Go对比](ProjectDocs/golang/Java跟Go对比.md) 
+  * [Go包介绍与初始化：搞清Go程序的执行次序](ProjectDocs/golang/Go包介绍与初始化：搞清Go程序的执行次序.md)  
   * [Go数组与切片](ProjectDocs/golang/Go数组与切片.md)  
   * [深入解析Go中Slice底层实现](ProjectDocs/golang/深入解析Go中Slice底层实现.md)  
   * [Map的实现原理](ProjectDocs/golang/map的实现原理.md)  
