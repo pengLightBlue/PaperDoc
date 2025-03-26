@@ -125,3 +125,5 @@
   * [常用设计模式](ProjectDocs/designpattern/常用设计模式.md)  
 * Distributed system
   * [分布式知识点](ProjectDocs/distributed-system/分布式知识点.md)  
+* Domain Driven Design
+  * [DDD领域驱动设计](ProjectDocs/ddd/DDD领域驱动设计.md)  
