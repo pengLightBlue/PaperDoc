@@ -1,6 +1,7 @@
 <!-- _sidebar.md -->
 
 * Network
+* [键入网址到网页显示，期间发生了什么？](ProjectDocs/network/键入网址到网页显示，期间发生了什么？.md) 
   * HTTP
     * [HTTP常见面试题](/ProjectDocs/network/HTTP常见面试题.md) 
     * [HTTP1.1如何优化](/ProjectDocs/network/HTTP1.1如何优化.md) 
