@@ -8,15 +8,15 @@
 
 在传统的同步阻塞网络编程模型里（没有协程以前），性能上不来的根本原因在于进程线程都是笨重的家伙。让一个进(线)程只处理一个用户请求确确实实是有点浪费了。
 
-![图片](../images/redis-epoll-1.png)
+![图片](../images/redis/redis-epoll-1.png)
 
 先抛开高内存开销不说，在海量的网络请求到来的时候，光是频繁的<mark>进程线程上下文</mark>就让 CPU 疲于奔命了。  
 
-![图片](../images/redis-epoll-2.png)
+![图片](../images/redis/redis-epoll-2.png)
 
 如果把进程比作牧羊人，一个进(线)程同时只能处理一个用户请求，相当于一个人只能看一只羊，放完这一只才能放下一只。如果同时来了 1000 只羊，那就得 1000 个人去放，这人力成本是非常高的。  
 
-![图片](../images/redis-epoll-3.png)
+![图片](../images/redis/redis-epoll-3.png)
 
 性能提升思路很简单，就是<mark>让很多的用户连接来复用同一个进(线)程，这就是**多路复用**。**多路**指的是许许多多个用户的网络连接。**复用**指的是对进(线)程的复用</mark>。换到牧羊人的例子里，就是一群羊只要一个牧羊人来处理就行了。  
 
@@ -24,7 +24,7 @@
 
 <mark>在 epoll 的系列函数里， epoll\_create 用于创建一个 epoll 对象，epoll\_ctl 用来给 epoll 对象添加或者删除一个 socket。epoll\_wait 就是查看它当前管理的这些 socket 上有没有可读可写事件发生。</mark>
 
-![图片](../images/redis-epoll-4.png)
+![图片](../images/redis/redis-epoll-4.png)
 
 <mark>当网卡上收到数据包后，Linux 内核进行一系列的处理后把数据放到 socket 的接收队列。然后会检查是否有 epoll 在管理它，如果是则在 epoll 的就绪队列中插入一个元素。epoll\_wait 的操作就非常的简单了，就是到 epoll 的就绪队列上来查询有没有事件发生就行了</mark>。关于 epoll 这只“牧羊犬”的工作原理参见[深入揭秘 epoll 是如何实现 IO 多路复用的] (Javaer 习惯把基于 epoll 的网络开发模型叫做 NIO)  
 
@@ -57,14 +57,13 @@ int main(int argc, char **argv) {
 
 本节中我们重点介绍 initServer，在下一节介绍事件处理循环 aeMain。<mark>在 initServer 这个函数内，Redis 做了这么三件重要的事情。</mark>
 
-![图片](../images/redis-epoll-5.png)
+![图片](../images/redis/redis-epoll-5.png)
 
 -   创建一个 epoll 对象
-    
+
 -   对配置的监听端口进行 listen
-    
+
 -   把 listen socket 让 epoll 给管理起来
-    
 
 ``` c
 //file: src/server.c
@@ -240,11 +239,10 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
 每一个 eventLoop->events 元素都<mark>指向一个 aeFileEvent 对象。在这个对象上，设置了三个关键东西</mark>
 
 -   rfileProc：读事件回调
-    
+
 -   wfileProc：写事件回调
-    
+
 -   clientData：一些额外的扩展数据
-    
 
 将来 <mark>当 epoll\_wait 发现某个 fd 上有事件发生的时候，这样 redis 首先根据 fd 到 eventLoop->events 中查找 aeFileEvent 对象，然后再看 rfileProc、wfileProc 就可以找到读、写回调处理函数。</mark>
 
@@ -269,7 +267,6 @@ listen fd 对应的读回调函数 rfileProc 事实上就被设置成了 acceptT
 在上一节介绍完了 Redis 的启动初始化过程，创建了 epoll，也进行了绑定监听，也注册了 accept 事件处理函数为 acceptTcpHandler。
 
 ``` c
-
 //file: src/server.c
 int main(int argc, char **argv) {
     ......
@@ -282,21 +279,19 @@ int main(int argc, char **argv) {
 
 接下来，Redis 就会进入 aeMain 开始进行真正的用户请求处理了。在 <mark>aeMain 函数中，是一个无休止的循环。在每一次的循环中，要做如下几件事情。</mark>
 
-![图片](../images/redis-epoll-6.png)
+![图片](../images/redis/redis-epoll-6.png)
 
 -   通过 epoll\_wait 发现 listen socket 以及其它连接上的可读、可写事件
-    
+
 -   若发现 listen socket 上有新连接到达，则接收新连接，并追加到 epoll 中进行管理
-    
+
 -   若发现其它 socket 上有命令请求到达，则读取和处理命令，把命令结果写到缓存中，将client对象加入写任务队列
-    
+
 -   每一次进入 epoll\_wait 前都调用 beforesleep 来将写任务队列中的数据实际进行发送
-    
+
 -   如若有首次未发送完毕的，当写事件发生时继续发送
-    
 
 ``` c
-
 //file:src/ae.c
 void aeMain(aeEventLoop *eventLoop) {
 
@@ -323,12 +318,11 @@ void aeMain(aeEventLoop *eventLoop) {
 
 <mark>Redis 不管有多少个用户连接，都是通过 epoll\_wait 来统一发现和管理其上的可读（包括 liisten socket 上的 accept事件）、可写事件的。甚至连 timer，也都是交给 epoll\_wait 来统一管理的</mark>。
 
-![图片](../images/redis-epoll-7.png)
+![图片](../images/redis/redis-epoll-7.png)
 
 <mark>每当 epoll\_wait 发现特定的事件发生的时候，就会调用相应的事先注册好的事件处理函数进行处理</mark>。我们来详细看 aeProcessEvents 对 epoll\_wait 的封装。
 
 ``` c
-
 //file:src/ae.c
 int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 {
@@ -367,14 +361,13 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
 
 <mark>在 acceptTcpHandler 中，主要做了几件事情</mark>
 
-![图片](../images/redis-epoll-8.png)
+![图片](../images/redis/redis-epoll-8.png)
 
 -   调用 accept 系统调用把用户连接给接收回来
-    
+
 -   为这个新连接创建一个唯一 redisClient 对象
-    
+
 -   将这个新连接添加到 epoll，并注册一个读事件处理函数
-    
 
 接下来让我们看上面这三件事情都分别是如何被处理的。
 
@@ -436,18 +429,17 @@ redisClient *createClient(int fd) {
 
 现在假设该用户连接有命令到达了，就假设用户发送了`GET XXXXXX_KEY` 命令。那么在 Redis 的时间循环中调用 epoll\_wait 发现该连接上有读时间后，会调用在上一节中讨论的为其注册的读处理函数 readQueryFromClient。
 
-![图片](../images/redis-epoll-9.png)
+![图片](../images/redis/redis-epoll-9.png)
 
 <mark>在读处理函数 readQueryFromClient 中主要做了这么几件事情。  </mark>
 
 -   解析并查找命令
-    
+
 -   调用命令处理
-    
+
 -   将client对象添加写任务到队列
-    
+
 -   将输出写到缓存等待发送
-    
 
 我们来详细地看 readQueryFromClient 的代码。在 readQueryFromClient 中会调用 processInputBuffer，然后进入 processCommand 对命令进行处理。其调用链如下：
 
@@ -558,9 +550,8 @@ void addReplyBulk(client *c, robj *obj) {
 其主题是调用 addReply 来设置回复数据。<mark>在 addReply 方法中做了两件事情：</mark>
 
 -   prepareClientToWrite 判断是否需要返回数据，并且将当前 client 添加到等待写返回数据队列中。
-    
+
 -   调用 \_addReplyToBuffer 和 \_addReplyObjectToList 方法将返回值写入到输出缓冲区中，等待写入 socekt
-    
 
 ``` c
 //file:src/networking.c
@@ -628,7 +619,7 @@ void aeMain(aeEventLoop *eventLoop) {
 
 该函数处理了许多工作，其中一项便是<mark>遍历发送任务队列，并将 client 发送缓存区中的处理结果通过 write 发送到客户端手中。</mark>
 
-![图片](../images/redis-epoll-10.png)
+![图片](../images/redis/redis-epoll-10.png)
 
 我们来看下 beforeSleep 的实际源码。  
 
@@ -718,24 +709,22 @@ int main(int argc, char **argv) {
 在 initServer 这个函数内，Redis 做了这么三件重要的事情。
 
 -   创建一个 epoll 对象
-    
+
 -   对配置的监听端口进行 listen
-    
+
 -   把 listen socket 让 epoll 给管理起来
-    
 
 在 aeMain 函数中，是一个无休止的循环，它是 Redis 中最重要的部分。在每一次的循环中，要做的事情可以总结为如下图。
 
-![图片](../images/redis-epoll-11.png)
+![图片](../images/redis/redis-epoll-11.png)
 
 -   通过 epoll\_wait 发现 listen socket 以及其它连接上的可读、可写事件
-    
+
 -   若发现 listen socket 上有新连接到达，则接收新连接，并追加到 epoll 中进行管理
-    
+
 -   若发现其它 socket 上有命令请求到达，则读取和处理命令，把命令结果写到缓存中，加入写任务队列
-    
+
 -   每一次进入 epoll\_wait 前都调用 beforesleep 来将写任务队列中的数据实际进行发送
-    
 
 其实事件分发器还处理了一个不明显的逻辑，那就是如果 beforesleep 在将结果写回给客户端的时候，如果由于内核 socket 发送缓存区过小而导致不能一次发送完毕的时候，也会注册一个写事件处理器。等到 epoll\_wait 发现对应的 socket 可写的时候，再执行 write 写处理。
 
