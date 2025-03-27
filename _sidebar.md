@@ -111,6 +111,7 @@
 * System
   * [操作系统常见面试题总结(上)](/ProjectDocs/system/操作系统常见面试题总结(上).md)  
   * [操作系统常见面试题总结(下)](/ProjectDocs/system/操作系统常见面试题总结(下).md)
+  * [进程间通信IPC](ProjectDocs/system/进程间通信IPC.md)
 * Linux
   * [Linux基础知识总结](ProjectDocs/linux/Linux基础知识总结.md)
   * [Linux常见命令](ProjectDocs/linux/Linux常见命令.md)  
