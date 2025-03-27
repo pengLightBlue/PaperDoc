@@ -1,5 +1,29 @@
 <!-- _sidebar.md -->
 
+* Golang
+  * [Java跟Go对比](ProjectDocs/golang/Java跟Go对比.md) 
+  * [Go包介绍与初始化：搞清Go程序的执行次序](ProjectDocs/golang/Go包介绍与初始化：搞清Go程序的执行次序.md)  
+  * [Go数组与切片](ProjectDocs/golang/Go数组与切片.md)  
+  * [深入解析Go中Slice底层实现](ProjectDocs/golang/深入解析Go中Slice底层实现.md)  
+  * [Map的实现原理](ProjectDocs/golang/map的实现原理.md)  
+  * [Defer关键字](ProjectDocs/golang/defer关键字.md)  
+  * [深入了解Go的interface{}底层原理](ProjectDocs/golang/深入了解Go的interface{}底层原理.md)  
+  * [上下文context](ProjectDocs/golang/上下文context.md)  
+  * [Go深入理解深拷贝和浅拷贝](ProjectDocs/golang/Go深入理解深拷贝和浅拷贝.md)  
+  * [互斥锁的实现原理](ProjectDocs/golang/互斥锁的实现原理.md)  
+  * [深入理解sync.RWMutex实现原理](ProjectDocs/golang/深入理解sync.RWMutex实现原理.md)  
+  * [sync.WaitGroup原理深度剖析](ProjectDocs/golang/sync.WaitGroup原理深度剖析.md)  
+  * [sync.Once原理](ProjectDocs/golang/sync.Once原理.md)  
+  * [sync.Cond条件变量源码分析](ProjectDocs/golang/sync.Cond条件变量源码分析.md)  
+  * [深度分析sync.Pool底层原理](ProjectDocs/golang/深度分析sync.Pool底层原理.md)  
+  * [sync.Map实现原理](ProjectDocs/golang/sync.Map实现原理.md)  
+  * [golang中channel的详细使用、使用注意事项及死锁分析](/ProjectDocs/golang/golang中channel的详细使用、使用注意事项及死锁分析.md)  
+  * [channel设计原理](/ProjectDocs/golang/channel设计原理.md)  
+  * [select使用与底层原理](ProjectDocs/golang/select使用与底层原理.md)    
+  * [Golang调度器GMP原理与调度全分析](ProjectDocs/golang/Golang调度器GMP原理与调度全分析.md)  
+  * [Go内存分配](ProjectDocs/golang/Go内存分配.md)  
+  * [Golang三色标记混合写屏障GC模式全分析](ProjectDocs/golang/Golang三色标记混合写屏障GC模式全分析.md)  
+  * [Go逃逸分析](ProjectDocs/golang/go逃逸分析.md) 
 * Mysql
   * [执行一条select语句，期间发生了什么](/ProjectDocs/mysql/执行一条select语句，期间发生了什么.md)
   * [MySQL一行记录是怎么存储的](/ProjectDocs/mysql/MySQL一行记录是怎么存储的.md)
@@ -76,31 +100,14 @@
     * [什么是零拷贝？](/ProjectDocs/network/什么是零拷贝？.md)
     * [IO多路复用：select&poll&epoll](/ProjectDocs/network/IO多路复用：select&poll&epoll.md)
     * [高性能网络模式：Reactor和Proactor](/ProjectDocs/network/高性能网络模式：Reactor和Proactor.md)
-    * [什么是一致性哈希？](/ProjectDocs/network/什么是一致性哈希？.md)  
-* Golang
-  * [Java跟Go对比](ProjectDocs/golang/Java跟Go对比.md) 
-  * [Go包介绍与初始化：搞清Go程序的执行次序](ProjectDocs/golang/Go包介绍与初始化：搞清Go程序的执行次序.md)  
-  * [Go数组与切片](ProjectDocs/golang/Go数组与切片.md)  
-  * [深入解析Go中Slice底层实现](ProjectDocs/golang/深入解析Go中Slice底层实现.md)  
-  * [Map的实现原理](ProjectDocs/golang/map的实现原理.md)  
-  * [Defer关键字](ProjectDocs/golang/defer关键字.md)  
-  * [深入了解Go的interface{}底层原理](ProjectDocs/golang/深入了解Go的interface{}底层原理.md)  
-  * [上下文context](ProjectDocs/golang/上下文context.md)  
-  * [Go深入理解深拷贝和浅拷贝](ProjectDocs/golang/Go深入理解深拷贝和浅拷贝.md)  
-  * [互斥锁的实现原理](ProjectDocs/golang/互斥锁的实现原理.md)  
-  * [深入理解sync.RWMutex实现原理](ProjectDocs/golang/深入理解sync.RWMutex实现原理.md)  
-  * [sync.WaitGroup原理深度剖析](ProjectDocs/golang/sync.WaitGroup原理深度剖析.md)  
-  * [sync.Once原理](ProjectDocs/golang/sync.Once原理.md)  
-  * [sync.Cond条件变量源码分析](ProjectDocs/golang/sync.Cond条件变量源码分析.md)  
-  * [深度分析sync.Pool底层原理](ProjectDocs/golang/深度分析sync.Pool底层原理.md)  
-  * [sync.Map实现原理](ProjectDocs/golang/sync.Map实现原理.md)  
-  * [golang中channel的详细使用、使用注意事项及死锁分析](/ProjectDocs/golang/golang中channel的详细使用、使用注意事项及死锁分析.md)  
-  * [channel设计原理](/ProjectDocs/golang/channel设计原理.md)  
-  * [select使用与底层原理](ProjectDocs/golang/select使用与底层原理.md)    
-  * [Golang调度器GMP原理与调度全分析](ProjectDocs/golang/Golang调度器GMP原理与调度全分析.md)  
-  * [Go内存分配](ProjectDocs/golang/Go内存分配.md)  
-  * [Golang三色标记混合写屏障GC模式全分析](ProjectDocs/golang/Golang三色标记混合写屏障GC模式全分析.md)  
-  * [Go逃逸分析](ProjectDocs/golang/go逃逸分析.md)  
+    * [什么是一致性哈希？](/ProjectDocs/network/什么是一致性哈希？.md)   
+* System
+  * [操作系统常见面试题总结(上)](/ProjectDocs/system/操作系统常见面试题总结(上).md)  
+  * [操作系统常见面试题总结(下)](/ProjectDocs/system/操作系统常见面试题总结(下).md)
+  * [进程间通信IPC](ProjectDocs/system/进程间通信IPC.md)
+* Linux
+  * [Linux基础知识总结](ProjectDocs/linux/Linux基础知识总结.md)
+  * [Linux常见命令](ProjectDocs/linux/Linux常见命令.md)      
 * Chatbot
   * [美团智能客服核心技术与实践](/ProjectDocs/chatbot/美团智能客服核心技术与实践.md)
 * Saas
@@ -113,13 +120,6 @@
   * [Trie树:如何实现搜索引擎的搜索关键词提示功能？](/ProjectDocs/algorithm/Trie树：如何实现搜索引擎的搜索关键词提示功能？.md)  
 * Prometheus
   * [彻底理解Prometheus查询语法](/ProjectDocs/prometheus/彻底理解Prometheus查询语法.md)    
-* System
-  * [操作系统常见面试题总结(上)](/ProjectDocs/system/操作系统常见面试题总结(上).md)  
-  * [操作系统常见面试题总结(下)](/ProjectDocs/system/操作系统常见面试题总结(下).md)
-  * [进程间通信IPC](ProjectDocs/system/进程间通信IPC.md)
-* Linux
-  * [Linux基础知识总结](ProjectDocs/linux/Linux基础知识总结.md)
-  * [Linux常见命令](ProjectDocs/linux/Linux常见命令.md)  
 * Ai
   * [一文搞懂rag](ProjectDocs/ai/一文搞懂rag.md)
   * [Agent的原理介绍与应用发展思考](ProjectDocs/ai/Agent的原理介绍与应用发展思考.md)
