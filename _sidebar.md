@@ -130,3 +130,7 @@
   * [分布式知识点](ProjectDocs/distributed-system/分布式知识点.md)  
 * Domain Driven Design
   * [DDD领域驱动设计](ProjectDocs/ddd/DDD领域驱动设计.md)  
+* System design
+  * [系统设计](ProjectDocs/system-design/系统设计.md)  
+  * [后台服务器高性能设计思想](ProjectDocs/system-design/后台服务器高性能设计思想.md)
+  * [秒杀系统如何设计](ProjectDocs/system-design/秒杀系统如何设计.md)
