@@ -14,9 +14,9 @@ Kafka 将消息以 topic 为单位进行归纳，发布消息的程序称为 **P
 
 **Kafka 中重要的组件**
 
-_1）Producer_：消息生产者，发布消息到Kafka集群的终端或服务
+Producer：消息生产者，发布消息到Kafka集群的终端或服务
 
-_2）Broker_：一个 Kafka 节点就是一个 Broker，多个Broker可组成一个Kafka 集群。
+Broker：一个 Kafka 节点就是一个 Broker，多个Broker可组成一个Kafka 集群。
 
 > 如果某个 Topic 下有 n 个Partition 且集群有 n 个Broker，那么每个 Broker会存储该 Topic 下的一个 Partition
 >
@@ -24,19 +24,19 @@ _2）Broker_：一个 Kafka 节点就是一个 Broker，多个Broker可组成一
 >
 > 如果某个 Topic 下有 n 个Partition 且集群中的Broker数量小于 n，那么一个 Broker 会存储该 Topic 下的一个或多个 Partition，这种情况尽量避免，会导致集群数据不均衡
 
-_3）Topic_：消息主题，每条发布到Kafka集群的消息都会归集于此，Kafka是面向Topic 的
+Topic：消息主题，每条发布到Kafka集群的消息都会归集于此，Kafka是面向Topic 的
 
-_4）Partition_：Partition 是Topic在物理上的分区，一个Topic可以分为多个Partition，每个Partition是一个有序的不可变的记录序列。单一主题中的分区有序，但无法保证主题中所有分区的消息有序。
+Partition：Partition 是Topic在物理上的分区，一个Topic可以分为多个Partition，每个Partition是一个有序的不可变的记录序列。单一主题中的分区有序，但无法保证主题中所有分区的消息有序。
 
-_5）Consumer_：从Kafka集群中消费消息的终端或服务
+Consumer：从Kafka集群中消费消息的终端或服务
 
-_6）Consumer Group_：每个Consumer都属于一个Consumer Group，每条消息只能被Consumer Group中的一个Consumer消费，但可以被多个Consumer Group消费。
+_Consumer Group：每个Consumer都属于一个Consumer Group，每条消息只能被Consumer Group中的一个Consumer消费，但可以被多个Consumer Group消费。
 
-_7）Replica_：Partition 的副本，用来保障Partition的高可用性。
+_Replica：Partition 的副本，用来保障Partition的高可用性。
 
-_8）Controller：_ Kafka 集群中的其中一个服务器，用来进行Leader election以及各种 Failover 操作。
+Controller： Kafka 集群中的一个服务器，用来进行Leader election以及各种 Failover 操作。
 
-_9）Zookeeper_：Kafka 通过Zookeeper来存储集群中的 meta 消息
+Zookeeper：Kafka 通过Zookeeper来存储集群中的 meta 消息
 
 ## 2、Kafka 性能高原因
 
@@ -169,7 +169,7 @@ Consumer Group与Consumer的关系是动态维护的，当一个Consumer进程�
 
 **如何解决**
 
-首先先进行判断生产者是否能够降低生产速率，如果生产者不能阻止这种情况，为了处理增加的负载，用户需要添加足够的 Broker。或者选择生产阻塞，设置`Queue.enQueueTimeout.ms` 为 -1，通过这样处理，如果队列已满的情况，生产者将组织而不是删除消息。或者容忍这种异常，进行消息丢弃。
+首先先进行判断生产者是否能够降低生产速率，如果生产者不能阻止这种情况，为了处理增加的负载，用户需要添加足够的 Broker。或者选择生产阻塞，设置`Queue.enQueueTimeout.ms` 为 -1，通过这样处理，如果队列已满的情况，生产者将等待而不是删除消息。或者容忍这种异常，进行消息丢弃。
 
 ## 18、Consumer 如何消费指定分区消息
 
@@ -183,7 +183,7 @@ Cosumer 消费消息时，想Broker 发出 `fetch` 请求去消费特定分区�
 >
 > 所有Partition 的副本默认情况下都会均匀地分布到所有 Broker 上,一旦领导者副本所在的Broker宕机，Kafka 会从追随者副本中选举出新的领导者继续提供服务。
 
-**Leader：** 副本中的领导者。负责对外提供服务，与客户端进行交互。生产者总是向 Leader副本些消息，消费者总是从 Leader 读消息
+**Leader：** 副本中的领导者。负责对外提供服务，与客户端进行交互。生产者总是向 Leader副本写消息，消费者总是从 Leader 读消息
 
 **Follower：** 副本中的追随者。被动地追随 Leader，不能与外界进行交付。只是向Leader发送消息，请求Leader把最新生产的消息发给它，进而保持同步。
 
@@ -207,7 +207,7 @@ Kafka官方提供了MirrorMaker组件，作为跨集群的流数据同步方案�
 
 Leader 会维护一个与自己基本保持同步的Replica列表，该列表称为ISR，每个Partition都会有一个ISR，而且是由Leader动态维护。所谓动态维护，就是说如果一个Follower比一个Leader落后太多，或者超过一定时间未发起数据复制请求，则Leader将其从ISR中移除。当ISR中所有Replica都向Leader发送ACK（Acknowledgement确认）时，Leader才commit。
 
-## [24、分区副本中的 Leader 如果宕机但 ISR 却为空该如何处理
+## 24、分区副本中的 Leader 如果宕机但 ISR 却为空该如何处理
 
 可以通过配置`unclean.leader.election` ：
 
