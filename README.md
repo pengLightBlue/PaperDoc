@@ -80,7 +80,6 @@
 * Kafka
   * [Kafka是什么](ProjectDocs/Kafka/Kafka是什么.md)
   * [Kafka常见问题总结](ProjectDocs/Kafka/Kafka常见问题总结.md)
-  * [Kafka精选知识点](ProjectDocs/Kafka/Kafka精选知识点.md)
   * [kafka原理介绍](ProjectDocs/Kafka/kafka原理介绍.md)
   * [kafka架构介绍](ProjectDocs/Kafka/kafka架构介绍.md)
   * [kafka集群工作原理](ProjectDocs/Kafka/kafka集群工作原理.md)
