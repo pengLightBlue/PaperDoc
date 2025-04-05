@@ -90,12 +90,11 @@
   * [elasticSearch是什么？工作原理是怎么样的？](ProjectDocs/es/elasticSearch是什么？工作原理是怎么样的.md)
   * [es知识点总结](ProjectDocs/es/es知识点总结.md)  
 * Network
-  * Auth
-    * [cookie、session、token、jwt的区别](ProjectDocs/network/auth/cookie、session、token、jwt的区别.md) 
   * 基础篇
     * [TCP/IP 网络模型有哪几层？](ProjectDocs/network/TCP-IP网络模型有哪几层？.md) 
     * [键入网址到网页显示，期间发生了什么？](ProjectDocs/network/键入网址到网页显示，期间发生了什么？.md) 
     * [Linux系统是如何收发网络包的？](ProjectDocs/network/Linux系统是如何收发网络包的？.md) 
+    * [cookie、session、token、jwt的区别](ProjectDocs/network/auth/cookie、session、token、jwt的区别.md) 
   * HTTP
     * [HTTP常见面试题](/ProjectDocs/network/HTTP常见面试题.md) 
     * [HTTP1.1如何优化](/ProjectDocs/network/HTTP1.1如何优化.md) 
@@ -109,6 +108,10 @@
   * TCP
     * [TCP三次握手与四次挥手](/ProjectDocs/network/TCP三次握手与四次挥手.md) 
     * [TCP重传、滑动窗口、流量控制、拥塞控制](/ProjectDocs/network/TCP重传、滑动窗口、流量控制、拥塞控制.md) 
+  * IP
+    * [IP基础知识](/ProjectDocs/network/IP基础知识.md)     
+    * [ping的工作原理](/ProjectDocs/network/ping的工作原理.md) 
+    * [断网了，还能ping通127.0.0.1吗](ProjectDocs/network/断网了，还能ping通127.0.0.1吗.md) 
   * 底层原理
     * [深入操作系统，一文搞懂Socket到底是什么](/ProjectDocs/network/深入操作系统，一文搞懂Socket到底是什么.md)
     * [什么是零拷贝？](/ProjectDocs/network/什么是零拷贝？.md)
