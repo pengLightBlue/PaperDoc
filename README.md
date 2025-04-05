@@ -27,6 +27,8 @@
   * [Go内存分配](ProjectDocs/golang/Go内存分配.md)  
   * [Golang三色标记混合写屏障GC模式全分析](ProjectDocs/golang/Golang三色标记混合写屏障GC模式全分析.md)  
   * [Go逃逸分析](ProjectDocs/golang/go逃逸分析.md) 
+  * [Golang大杀器之性能剖析PProf](ProjectDocs/golang/pprof.md)  
+  * [Golang大杀器之跟踪剖析trace](ProjectDocs/golang/trace.md)  
 * Mysql
   * [执行一条select语句，期间发生了什么](/ProjectDocs/mysql/执行一条select语句，期间发生了什么.md)
   * [MySQL一行记录是怎么存储的](/ProjectDocs/mysql/MySQL一行记录是怎么存储的.md)
