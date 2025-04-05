@@ -5,6 +5,7 @@
 * [Redis](ProjectDocs/redis/_sidebar.md)    
 * [Kafka](ProjectDocs/Kafka/_sidebar.md)
 * [Zookeeper](ProjectDocs/zookeeper/_sidebar.md)
+* [Etcd](ProjectDocs/etcd/_sidebar.md)
 * [ES](ProjectDocs/es/_sidebar.md)
 * [Network](ProjectDocs/network/_sidebar.md)   
 * [System](ProjectDocs/system/_sidebar.md)
