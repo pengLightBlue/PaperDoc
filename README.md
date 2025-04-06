@@ -36,6 +36,7 @@
 * Mysql
   * [执行一条select语句，期间发生了什么](/ProjectDocs/mysql/执行一条select语句，期间发生了什么.md)
   * [MySQL一行记录是怎么存储的](/ProjectDocs/mysql/MySQL一行记录是怎么存储的.md)
+  * [什么是三大范式](ProjectDocs/mysql/什么是三大范式.md)
   * [索引常见面试题](/ProjectDocs/mysql/索引常见面试题.md)
   * [MySQL执行计划分析](/ProjectDocs/mysql/MySQL执行计划分析.md)
   * [从数据页的角度看B+树](/ProjectDocs/mysql/从数据页的角度看B+树.md)
