@@ -1,12 +1,13 @@
 <!-- _sidebar.md -->
 
 * Mysql
-  * [执行一条select语句，期间发生了什么](/ProjectDocs/mysql/执行一条select语句，期间发生了什么.md)
-  * [MySQL一行记录是怎么存储的](/ProjectDocs/mysql/MySQL一行记录是怎么存储的.md)
-  * [索引常见面试题](/ProjectDocs/mysql/索引常见面试题.md)
-  * [从数据页的角度看B+树](/ProjectDocs/mysql/从数据页的角度看B+树.md)
-  * [为什么MySQL采用B+树作为索引](/ProjectDocs/mysql/为什么MySQL采用B+树作为索引.md)
-  * [MySQL单表不能超过2000W行吗](/ProjectDocs/mysql/MySQL单表不能超过2000W行吗.md)
+  * [执行一条select语句，期间发生了什么](ProjectDocs/mysql/执行一条select语句，期间发生了什么.md)
+  * [MySQL一行记录是怎么存储的](ProjectDocs/mysql/MySQL一行记录是怎么存储的.md)
+  * [索引常见面试题](ProjectDocs/mysql/索引常见面试题.md)
+  * [MySQL执行计划分析](ProjectDocs/mysql/MySQL执行计划分析.md)
+  * [从数据页的角度看B+树](ProjectDocs/mysql/从数据页的角度看B+树.md)
+  * [为什么MySQL采用B+树作为索引](ProjectDocs/mysql/为什么MySQL采用B+树作为索引.md)
+  * [MySQL单表不能超过2000W行吗](ProjectDocs/mysql/MySQL单表不能超过2000W行吗.md)
   * [索引失效有哪些](ProjectDocs/mysql/索引失效有哪些.md)
   * [MySQL使用like "%x"，索引一定会失效吗？](ProjectDocs/mysql/mysql使用like，索引一定会失效吗.md)
   * [count(*)和count(1)有什么区别？哪个性能最好？](ProjectDocs/mysql/count(*)和count(1)有什么区别？哪个性能最好.md)
@@ -19,7 +20,11 @@
   * [MySQL死锁了，怎么办？](ProjectDocs/mysql/MySQL死锁了，怎么办.md)
   * [加了什么锁，导致的死锁？](ProjectDocs/mysql/加了什么锁，导致的死锁.md)
   * [MySQL日志：undo log、redo log、binlog有什么用](ProjectDocs/mysql/MySQL日志：undo-log、redo-log、binlog有什么用.md)
+  * [读写分离与分库分表详解](ProjectDocs/mysql/读写分离与分库分表详解.md)
   * [MySQL分库分表策略](ProjectDocs/mysql/MySQL分库分表策略.md)
+  * [深度分页介绍及优化建议](ProjectDocs/mysql/深度分页介绍及优化建议.md)
+  * [数据冷热分离详解](ProjectDocs/mysql/数据冷热分离详解.md)
   * [揭开Buffer Pool的面纱](ProjectDocs/mysql/MySQL缓冲池.md)
   * [Mysql常用存储引擎对比总结](ProjectDocs/mysql/Mysql常用存储引擎对比总结.md)
+  * [MySQL性能怎么优化](ProjectDocs/mysql/MySQL性能怎么优化.md)
   
