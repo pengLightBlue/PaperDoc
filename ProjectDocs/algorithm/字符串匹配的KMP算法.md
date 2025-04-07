@@ -1,3 +1,46 @@
+# LeetCode28: 找出字符串中第一个匹配项的下标
+
+题目：给你两个字符串 `haystack` 和 `needle` ，请你在 `haystack` 字符串中找出 `needle` 字符串的第一个匹配项的下标（下标从 0 开始）。如果 `needle` 不是 `haystack` 的一部分，则返回 `-1` 。
+
+## 暴力求解
+
+### 解题思路
+
+1. **边界处理**：
+   - 如果 `needle` 为空字符串，直接返回0。
+   - 如果 `haystack` 的长度小于 `needle` 的长度，返回-1。
+2. **暴力匹配法**：
+   - 遍历 `haystack` 中每一个可能的起始位置 `i`（从0到 `len(haystack) - len(needle)`）。
+   - 对于每个位置 `i`，检查从 `i` 开始的子字符串是否与 `needle` 完全匹配。
+   - 找到第一个匹配的位置后立即返回，否则遍历结束后返回-1。
+
+```go
+func strStr(haystack string, needle string) int {
+    if len(needle) == 0 {
+        return 0
+    }
+    n, m := len(needle), len(haystack)
+    if m < n {
+        return -1
+    }
+  	// abc, a -> 3-1=2
+    for i := 0; i <= m-n; i++ {
+        if haystack[i:i+n] == needle {
+            return i
+        }
+    }
+    return -1
+}
+```
+
+### 代码解析
+
+- **边界条件处理**：首先处理 `needle` 为空的情况，直接返回0。如果 `haystack` 比 `needle` 短，不可能包含，返回-1。
+- **主循环**：遍历所有可能的起始位置 `i`，检查每个位置开始的子字符串是否与 `needle` 相等。一旦找到立即返回当前索引 `i`。
+- **时间复杂度**：最坏情况下为O((m-n+1)*n)，其中m和n分别是两个字符串的长度。适用于一般情况，尤其是测试数据规模较小时效率足够。
+
+## KMP
+
 今天我们来讲一个经典的字符串匹配算法，KMP字符串匹配是一个非常基本的操作，也就在一个字符串中寻找另一个子串。
 
 其中最容易想到的是一种暴力匹配的算法，比如一个字一个字地与子串进行比对
