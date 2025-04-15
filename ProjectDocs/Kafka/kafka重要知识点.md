@@ -30,6 +30,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-a9ef6a29cb9ba3456a05ad75cb91cb03_720w.webp)
 
 <figcaption>消费者宕机情况</figcaption>
@@ -42,6 +43,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-8803223d712fdde035b8e7b9170dd3fb_720w.webp)
 
 <figcaption>新增消费者情况</figcaption>
@@ -51,6 +53,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 3.Topic 下的 Partition 增多，触发 Repartition 操作，如下图所示。一般这种调整 Partition 个数的情况也是为了提高消费端消费速度的，因为当消费者个数大于等于 Partition 个数时，在增加消费者个数是没有用的（原因是：在一个消费组内，消费者:Partition = 1:N，当 N 小于 1 时，相当于消费者过剩了），所以一方面增加 Partition 个数同时增加消费者个数可以提高消费端的消费速度。
 
 <figure data-size="normal">
+
 
 
 
@@ -78,6 +81,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-122b4a706de39655d257928005a83ff1_720w.webp)
 
 <figcaption>消费端工作流程</figcaption>
@@ -87,6 +91,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 我们在从消费者与 ZK 的角度来看看其工作流程是什么样的？
 
 <figure data-size="normal">
+
 
 
 
@@ -123,6 +128,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-1a047ed616ba44daebdb4b6ce786a61a_720w.webp)
 
 <figcaption>先消费后保存消费进度</figcaption>
@@ -134,6 +140,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 消费者读取消息，先保存消费进度，在处理消息。消费者拉取到消息，先保存了偏移量，当保存了偏移量后还没消费完消息，消费者挂了，则会造成未消费的消息丢失。如下图所示：
 
 <figure data-size="normal">
+
 
 
 
@@ -151,6 +158,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-a0bbb114e2ad551227f81c1f26d4bd5d_720w.webp)
 
 <figcaption>正好消费一次</figcaption>
@@ -162,6 +170,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 假设有一个 Kafka 集群，Broker 个数为 3，Topic 个数为 1，Partition 个数为 3，Replica 个数为 2。Partition 的物理分布如下图所示。
 
 <figure data-size="normal">
+
 
 
 
@@ -187,6 +196,7 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-eb66e4ecf7cf07fcb6b12029bfdd9b71_720w.webp)
 
 <figcaption>消息写入及落盘流程</figcaption>
@@ -206,6 +216,7 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 了解以上过程后，我们在来看看消息的具体构成情况。
 
 <figure data-size="normal">
+
 
 
 
@@ -239,15 +250,10 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 假设消费端从 000000621 位置开始消费消息，关于几个变量的关系如下图所示。
 
-<figure data-size="normal">
 
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-cd9c62a71cddccd7bc8a5d810d5af216_720w.webp)
-
-<figcaption>位置关系图</figcaption>
-
-</figure>
 
 消费端和从副本拉取流程如下：
 
@@ -262,11 +268,68 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-9417ca60a0c5e9474ec49a77fff18b1b_720w.webp)
 
-<figcaption>消息拉取流程图</figcaption>
+**Broker 处理 Fetch 请求**
 
-</figure>
+Broker 收到请求后，需从日志文件中查找消息，流程如下：
+
+**步骤 1：定位日志分段（Log Segment）**
+
+- Kafka 的日志目录按分段存储（Segment），每个分段命名规则为：
+
+  - `<base_offset>.log`（存储消息）
+  - `<base_offset>.index`（存储位移索引）
+  - `<base_offset>.timeindex`（存储时间戳索引）
+
+  例如：
+
+  复制
+
+  ```
+  topic-test-0/
+      ├── 00000000000000000000.log
+      ├── 00000000000000000000.index
+      ├── 00000000000000001000.log
+      ├── 00000000000000001000.index
+  ```
+
+- **查找目标分段**：
+
+  - Broker 根据 `fetch_offset`（如 8）找到包含该 offset 的日志分段：
+    - 如果 `fetch_offset` < 1000，则选择 `00000000000000000000.log`。
+    - 如果 `fetch_offset` >= 1000，则选择 `00000000000000001000.log`。
+
+**步骤 2：使用索引文件快速定位**
+
+- **位移索引（.index 文件）**：
+
+  - 索引文件存储的是 **offset → 物理位置** 的映射（稀疏索引，非每一条消息都记录）。
+
+  - 例如：
+
+    复制
+
+    ```
+    offset: 4 → physical_position: 1024
+    offset: 8 → physical_position: 2048
+    ```
+
+  - Broker 对索引文件执行 **二分查找**，找到小于等于 `fetch_offset` 的最大索引条目：
+
+    - 例如 `fetch_offset=8`，找到索引条目 `offset=8 → position=2048`。
+
+- **定位到日志文件（.log）**：
+
+  - 根据索引找到的 `physical_position`（如 2048），直接从 `.log` 文件的 2048 字节处开始读取消息。
+
+**步骤 3：读取消息并返回**
+
+- Broker 从 `.log` 文件的指定位置读取消息，并检查：
+  - 消息的 `offset` 是否 >= `fetch_offset`。
+  - 消息是否在 **高水位（HW）** 以内（避免读取未提交的消息）。
+- 返回符合条件的消息集合（`FetchResponse`）。
 
 ## kafka 如何保证系统的高可用、数据的可靠性和数据的一致性的？
 
@@ -280,15 +343,10 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 1.  **从 Producer 端来看，可靠性是指生产的消息能够正常的被存储到 Partition 上且消息不会丢失。Kafka 通过 [request.required.acks](https://link.zhihu.com/?target=https%3A//xie.infoq.cn/edit/49a133ad2b2f2671aa60706b0%23)和[min.insync.replicas](https://link.zhihu.com/?target=https%3A//xie.infoq.cn/edit/49a133ad2b2f2671aa60706b0%23) 两个参数配合，在一定程度上保证消息不会丢失。**
 2.  **[request.required.acks](https://link.zhihu.com/?target=https%3A//xie.infoq.cn/edit/49a133ad2b2f2671aa60706b0%23) 可设置为 1、0、-1 三种情况。**
 
-<figure data-size="normal">
 
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-7946f258c85fb8ca3d4aa423269c483a_720w.webp)
-
-<figcaption>request.required.acks=1</figcaption>
-
-</figure>
 
 设置为 1 时代表当 Leader 状态的 Partition 接收到消息并持久化时就认为消息发送成功，如果 ISR 列表的 Replica 还没来得及同步消息，Leader 状态的 Partition 对应的 Broker 宕机，则消息有可能丢失。
 
@@ -296,23 +354,17 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-382c9f37f644feb37dd975c67bc1038f_720w.webp)
-
-<figcaption>request.required.acks=0</figcaption>
-
-</figure>
 
 设置为 0 时代表 Producer 发送消息后就认为成功，消息有可能丢失。
 
-<figure data-size="normal">
 
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-592996f264baadc64967d6f4b28f4d23_720w.webp)
 
-<figcaption>request.required.acks=-1</figcaption>
 
-</figure>
 
 设置为-1 时，代表 ISR 列表中的所有 Replica 将消息同步完成后才认为消息发送成功；但是如果只存在主 Partition 的时候，Broker 异常时同样会导致消息丢失。所以此时就需要[min.insync.replicas](https://link.zhihu.com/?target=https%3A//xie.infoq.cn/edit/49a133ad2b2f2671aa60706b0%23)参数的配合，该参数需要设定值大于等于 2，当 Partition 的个数小于设定的值时，Producer 发送消息会直接报错。
 
@@ -322,15 +374,8 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 1.  **从 Consumer 端来看，同一条消息在多个 Partition 上读取到的消息是一直的，Kafka 通过引入 HW（High Water）来实现这一特性。**
 
-<figure data-size="normal">
-
-
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-9975539d98bf1a4e1a3038f2eceb2bb9_720w.webp)
-
-<figcaption>消息同步图</figcaption>
-
-</figure>
 
 从上图可以看出，假设 Consumer 从主 Partition1 上消费消息，由于 Kafka 规定只允许消费 HW 之前的消息，所以最多消费到 Message2。假设当 Partition1 异常后，Partition2 被选举为 Leader，此时依旧可以从 Partition2 上读取到 Message2。其实 HW 的意思利用了木桶效应，始终保持最短板的那个位置。
 
@@ -346,27 +391,13 @@ kafka 使用了顺序写入和“零拷贝”技术，来达到每秒钟 200w（
 
 1.  **“零拷贝”技术**
 
-<figure data-size="normal">
-
-
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-6930901956f341f1ab4a6e5650a0680b_720w.webp)
 
-<figcaption>普通数据拷贝流程图</figcaption>
-
-</figure>
-
 普通的数据拷贝流程如上图所示，数据由磁盘 copy 到内核态，然后在拷贝到用户态，然后再由用户态拷贝到 socket，然后由 socket 协议引擎，最后由协议引擎将数据发送到网络中。
-
-<figure data-size="normal">
-
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-9e44873a63d8addca917e658667f0b61_720w.webp)
-
-<figcaption>&amp;quot;零拷贝&amp;quot;流程图</figcaption>
-
-</figure>
 
 采用了“零拷贝”技术后可以看出，数据不在经过用户态传输，而是直接在内核态完成操作，减少了两次 copy 操作。从而大大提高了数据传输速度。
 
@@ -387,27 +418,13 @@ Kafka 官方提供了多种压缩协议，包括 gzip、snappy、lz4 等等，�
 
 这道题比较主观一些（自认为没有网上其他文章写得话，轻喷），但是都相信大家使用消息队列无非就是为了 **解耦**、**异步**、**消峰**。
 
-<figure data-size="normal">
-
-
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-f7c1bb87ab46ddd03255c58109ce360f_720w.webp)
 
-<figcaption>系统调用图</figcaption>
-
-</figure>
-
 随着业务的发展，相信有不少朋友公司遇到过如上图所示的情况，系统 A 处理的结构被 B、C、D 系统所依赖，当新增系统 E 时，也需要系统 A 配合进行联调和上线等操作；还有当系统 A 发生变更时同样需要告知 B、C、D、E 系统需要同步升级改造。
-
-<figure data-size="normal">
-
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-0f0c8f9531a38f6d79b2cbb2973bfbfc_720w.webp)
-
-<figcaption>引入消息队列图</figcaption>
-
-</figure>
 
 引入消息队列后有两个好处：
 
@@ -439,6 +456,7 @@ Kafka 如果支持读写分离的话，有如下几个问题。
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-98093ad82970feb7a0c52954c6942aa1_720w.webp)
 
 </figure>
@@ -459,7 +477,7 @@ ISR：速率和leader相差低于10s的follower的集合
 
 OSR：速率和leader相差大于10s的follwer
 
-AR：所有分区的follower
+AR：所有分区的副本
 
 #### 1.2 Kafka 中的 HW、 LEO 等分别代表什么？
 
@@ -487,7 +505,7 @@ batch.size达到此规模消息才发送，linger.ms未达到规模，等待当�
 
 #### 1.7 消费者提交消费位移时提交的是当前消费到的最新消息的 offset 还是 offset+1？
 
-生产者发送数据的offset是从0开始的，消费者消费的数据的offset是从1开始，故最新消息是offset+1
+在 Kafka 中，消费者提交的消费位移（offset）通常是当前已成功消费的最新消息的 offset + 1，即下一次应该开始消费的消息的 offset
 
 #### 1.8 有哪些情形会造成重复消费？
 
@@ -520,6 +538,7 @@ Kafka分区对于Kafka集群来说，分区可以做到负载均衡，对于消�
 #### 1.15 简述 Kafka 的日志目录结构？
 
 每一个分区对应着一个文件夹，命名为topic-0/topic-1…，每个文件夹内有.index和.log文件。
+Leader 副本和 Follower 副本的日志目录结构和存储内容是完全相同的，它们都遵循相同的日志分段（Log Segment）存储格式
 
 #### 1.16 如果我指定了一个 offset， Kafka Controller 怎么查找到对应的消息？
 
