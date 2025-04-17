@@ -1,7 +1,5 @@
 # MySQL 死锁了，怎么办？
 
-大家好，我是小林。
-
 说个很早之前自己遇到过数据库死锁问题。
 
 有个业务主要逻辑就是新增订单、修改订单、查询订单等操作。然后因为订单是不能重复的，所以当时在新增订单的时候做了幂等性校验，做法就是在新增订单记录之前，先通过 `select ... for update` 语句查询订单是否存在，如果不存在才插入订单记录。
@@ -10,7 +8,33 @@
 
 接下来跟大家聊下**为什么会发生死锁，以及怎么避免死锁**。
 
-## [#](https://xiaolincoding.com/mysql/lock/deadlock.html#%E6%AD%BB%E9%94%81%E7%9A%84%E5%8F%91%E7%94%9F) 死锁的发生
+## 死锁的定义
+
+死锁是指`两个或多个事务`在同一资源上相互占用，并请求`锁定`对方占用的资源（我等待你的资源，你却等待我的资源，我们都相互等待，谁也不释放自己占有的资源），从而导致恶性循环的现象：
+
+- 当多个`事务`试图以不同顺序锁定资源时，就可能会产生死锁
+- 多个`事务`，同时`锁定`同一个资源时，也会产生死锁
+
+## 死锁的危害
+
+死等和死锁可不是一回事，如果你遇到了死等，大可放心，肯定不是死锁；如果发生了死锁，也大可放心，绝对不会死等。
+
+这是因为`MySQL`内部有一套死锁检测机制，一旦发生死锁会立即回滚一个事务，让另一个事务执行下去。并且这个死锁回滚的的错误消息也会发送给客户端。即使正常的业务中，死锁也时不时会发生，所以遇到死锁不要害怕，因为这也是对数据安全的一种保护，但是若死锁太频繁，那可能会带来许多的问题：
+
+1. 使进程得不到正确的结果：处于死锁状态的进程得不到所需的资源，不能向前推进，故得不到结果
+2. 使资源的利用率降低：处于死锁状态的进程不释放已占有的资源，以至于这些资源不能被其他进程利用，故系统资源利用率降低
+3. 导致产生新的死锁：其它进程因请求不到死锁进程已占用的资源而无法向前推进，所以也会发生死锁
+
+## 死锁产生的原因
+
+死锁有四个必要的条件：
+
+1. 多个并发事务（2个或者以上）
+2. 保持着排他资源又提出新资源请求：一个进程因请求资源而阻塞时，对已获得的资源保持不放
+3. 不可剥夺：资源不能被抢占，即资源只能在进程完成任务后自动释放
+4. 环路：有一组等待进程｛P0、P1、P2｝，`P0`等待的资源被`P1`所占有，`P1`等待的资源被`P2`所占有，而`P2`等待的又被`P0`所占有，形成了一个等待循环
+
+## 死锁的发生
 
 本次案例使用存储引擎 Innodb，隔离级别为可重复读（RR）。
 
@@ -25,7 +49,7 @@
       PRIMARY KEY (`id`),
       KEY `index_order` (`order_no`) USING BTREE
     ) ENGINE=InnoDB ;
-    
+
 
 然后，先 `t_order` 表里现在已经有了 6 条记录：
 
@@ -43,7 +67,7 @@
 
 ![](https://cdn.xiaolincoding.com//mysql/other/8ae18f10f1a89aac5e93f0e9794e469e.png)
 
-## [#](https://xiaolincoding.com/mysql/lock/deadlock.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E4%BA%A7%E7%94%9F%E6%AD%BB%E9%94%81) 为什么会产生死锁？
+## 为什么会产生死锁？
 
 可重复读隔离级别下，是存在幻读的问题。
 
@@ -63,7 +87,7 @@
     //对读取的记录加排他锁
     select ... for update;
     commit; //锁释放
-    
+
 
 行锁的释放时机是在事务提交（commit）后，锁就会被释放，并不是一条语句执行完就释放行锁。
 
@@ -71,11 +95,11 @@
 
 ![图片](https://cdn.xiaolincoding.com//mysql/other/8d1dfbab758fe7e4c58563fca9ccb6d4.png)
 
-next-key 锁的加锁规则其实挺复杂的，在一些场景下会退化成记录锁或间隙锁，我之前也写一篇加锁规则，详细可以看这篇：[MySQL 是怎么加锁的？ (opens new window)](https://xiaolincoding.com/mysql/lock/how_to_lock.html)
+next-key 锁的加锁规则其实挺复杂的，在一些场景下会退化成记录锁或间隙锁
 
 需要注意的是，如果 update 语句的 where 条件没有用到索引列，那么就会全表扫描，在一行行扫描的过程中，不仅给行记录加上了行锁，还给行记录两边的空隙也加上了间隙锁，相当于锁住整个表，然后直到事务结束才会释放锁。
 
-所以在线上千万不要执行没有带索引条件的 update 语句，不然会造成业务停滞，我有个读者就因为干了这个事情，然后被老板教育了一波，详细可以看这篇：[update 没加索引会锁全表？ (opens new window)](https://xiaolincoding.com/mysql/lock/update_index.html)
+所以在线上千万不要执行没有带索引条件的 update 语句，不然会造成业务停滞
 
 回到前面死锁的例子。
 
@@ -84,7 +108,7 @@ next-key 锁的加锁规则其实挺复杂的，在一些场景下会退化成�
 事务 A 在执行下面这条语句的时候：
 
     select id from t_order where order_no = 1007 for update;
-    
+
 
 我们可以通过 `select * from performance_schema.data_locks\G;` 这条语句，查看事务执行 SQL 过程中加了什么锁。
 
@@ -120,7 +144,7 @@ TIP
 当事务 B 往事务 A next-key 锁的范围 (1006, +∞\] 里插入 id = 1008 的记录就会被锁住：
 
     Insert into t_order (order_no, create_date) values (1008, now());
-    
+
 
 因为当我们执行以下插入语句时，会在插入间隙上获取插入意向锁，**而插入意向锁与间隙锁是冲突的，所以当其它事务持有该间隙的间隙锁时，需要等待其它事务释放间隙锁之后，才能获取到插入意向锁。而间隙锁与间隙锁之间是兼容的，所以所以两个事务中 `select ... for update` 语句并不会相互影响**。
 
@@ -165,7 +189,7 @@ _An Insert intention lock is a type of gap lock set by Insert operations prior t
 
 -   每插入一条新记录，都需要看一下待插入记录的下一条记录上是否已经被加了间隙锁，如果已加间隙锁，此时会生成一个插入意向锁，然后锁的状态设置为等待状态（_PS：MySQL 加锁时，是先生成锁结构，然后设置锁的状态，如果锁状态是等待状态，并不是意味着事务成功获取到了锁，只有当锁状态为正常状态时，才代表事务成功获取到了锁_），现象就是 Insert 语句会被阻塞。
 
-## [#](https://xiaolincoding.com/mysql/lock/deadlock.html#insert-%E8%AF%AD%E5%8F%A5%E6%98%AF%E6%80%8E%E4%B9%88%E5%8A%A0%E8%A1%8C%E7%BA%A7%E9%94%81%E7%9A%84) Insert 语句是怎么加行级锁的？
+## 语句是怎么加行级锁的？
 
 Insert 语句在正常执行时是不会生成锁结构的，它是靠聚簇索引记录自带的 trx\_id 隐藏列来作为**隐式锁**来保护记录的。
 
@@ -178,7 +202,7 @@ Insert 语句在正常执行时是不会生成锁结构的，它是靠聚簇索�
 -   如果记录之间加有间隙锁，为了避免幻读，此时是不能插入记录的；
 -   如果 Insert 的记录和已有记录存在唯一键冲突，此时也不能插入记录；
 
-### [#](https://xiaolincoding.com/mysql/lock/deadlock.html#_1%E3%80%81%E8%AE%B0%E5%BD%95%E4%B9%8B%E9%97%B4%E5%8A%A0%E6%9C%89%E9%97%B4%E9%9A%99%E9%94%81) 1、记录之间加有间隙锁
+### 1、记录之间加有间隙锁
 
 每插入一条新记录，都需要看一下待插入记录的下一条记录上是否已经被加了间隙锁，如果已加间隙锁，此时会生成一个插入意向锁，然后锁的状态设置为等待状态（_PS：MySQL 加锁时，是先生成锁结构，然后设置锁的状态，如果锁状态是等待状态，并不是意味着事务成功获取到了锁，只有当锁状态为正常状态时，才代表事务成功获取到了锁_），现象就是 Insert 语句会被阻塞。
 
@@ -194,7 +218,7 @@ Insert 语句在正常执行时是不会生成锁结构的，它是靠聚簇索�
     
     mysql> select * from t_order where order_no = 1006 for update;
     Empty set (0.01 sec)
-    
+
 
 接着，我们执行 `select * from performance_schema.data_locks\G;` 语句 ，确定事务 A 加了什么类型的锁，这里只关注在记录上加锁的类型。
 
@@ -210,7 +234,7 @@ Insert 语句在正常执行时是不会生成锁结构的，它是靠聚簇索�
     
     mysql> insert into t_order(order_no, create_date) values(1010,now());
     ### 阻塞状态。。。。
-    
+
 
 接着，我们执行 `select * from performance_schema.data_locks\G;` 语句 ，确定事务 B 加了什么类型的锁，这里只关注在记录上加锁的类型。
 
@@ -218,16 +242,15 @@ Insert 语句在正常执行时是不会生成锁结构的，它是靠聚簇索�
 
 可以看到，事务 B 的状态为等待状态（LOCK\_STATUS: WAITING），因为向事务 A 生成的 next-key 锁（记录锁+间隙锁）范围`（1005, +∞]` 中插入了一条记录，所以事务 B 的插入操作生成了一个插入意向锁（`LOCK_MODE: X,INSERT_INTENTION`），锁的状态是等待状态，意味着事务 B 并没有成功获取到插入意向锁，因此事务 B 发生阻塞。
 
-### [#](https://xiaolincoding.com/mysql/lock/deadlock.html#_2%E3%80%81%E9%81%87%E5%88%B0%E5%94%AF%E4%B8%80%E9%94%AE%E5%86%B2%E7%AA%81) 2、遇到唯一键冲突
+### 2、遇到唯一键冲突
 
 如果在插入新记录时，插入了一个与「已有的记录的主键或者唯一二级索引列值相同」的记录（不过可以有多条记录的唯一二级索引列的值同时为NULL，这里不考虑这种情况），此时插入就会失败，然后对于这条记录加上了 **S 型的锁**。
 
 -   如果主键索引重复，插入新记录的事务会给已存在的主键值重复的聚簇索引记录**添加 S 型记录锁**。
-    
--   如果唯一二级索引重复，插入新记录的事务都会给已存在的二级索引列值重复的二级索引记录**添加 S 型 next-key 锁**。
-    
 
-#### [#](https://xiaolincoding.com/mysql/lock/deadlock.html#%E4%B8%BB%E9%94%AE%E7%B4%A2%E5%BC%95%E5%86%B2%E7%AA%81) 主键索引冲突
+-   如果唯一二级索引重复，插入新记录的事务都会给已存在的二级索引列值重复的二级索引记录**添加 S 型 next-key 锁**。
+
+#### 主键索引冲突
 
 下面举个「主键冲突」的例子，MySQL 8.0 版本，事务隔离级别为可重复读（默认隔离级别）。
 
@@ -245,7 +268,7 @@ t\_order 表中的 id 字段为主键索引，并且已经存在 id 值为 5 的
 
 所以，在隔离级别是「可重复读」的情况下，如果在插入数据的时候，发生了主键索引冲突，插入新记录的事务会给已存在的主键值重复的聚簇索引记录**添加 S 型记录锁**。
 
-#### [#](https://xiaolincoding.com/mysql/lock/deadlock.html#%E5%94%AF%E4%B8%80%E4%BA%8C%E7%BA%A7%E7%B4%A2%E5%BC%95%E5%86%B2%E7%AA%81) 唯一二级索引冲突
+#### 唯一二级索引冲突
 
 下面举个「唯一二级索引冲突」的例子，MySQL 8.0 版本，事务隔离级别为可重复读（默认隔离级别）。
 
@@ -308,26 +331,249 @@ t\_order 表中的 order\_no 字段为唯一二级索引，并且已经存在 or
 
 ![](https://cdn.xiaolincoding.com//mysql/other/8ae18f10f1a89aac5e93f0e9794e469e-20230310003449585.png)
 
-## [#](https://xiaolincoding.com/mysql/lock/deadlock.html#%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E6%AD%BB%E9%94%81) 如何避免死锁？
+## 死锁的发生场景
+
+以下的所有场景是基于 `InnoDB存储引擎`并且隔离级别为`REPEATABLE-READ`（可重复读）
+
+**查询当前的隔离级别：**
+
+```
+select @@global.tx_isolation,@@tx_isolation;
+```
+
+```
++-----------------------+-----------------+
+| @@global.tx_isolation | @@tx_isolation  |
++-----------------------+-----------------+
+| REPEATABLE-READ       | REPEATABLE-READ |
++-----------------------+-----------------+
+```
+
+**修改隔离级别：**
+
+```sql
+set global transaction isolation level read committed; ## 全局的
+
+set session transaction isolation level read committed; ## 当前会话(session)
+```
+
+
+
+**创建数据表**
+
+```sql
+CREATE TABLE `deadlock` (
+  `id` int(11) NOT NULL,
+  `stu_num` int(11) DEFAULT NULL,
+  `score` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_uniq_stu_num` (`stu_num`),
+  KEY `idx_score` (`score`)
+) ENGINE=InnoDB;
+
+insert into deadlock(id, stu_num, score) values (1, 11, 111);
+insert into deadlock(id, stu_num, score) values (2, 22, 222);
+insert into deadlock(id, stu_num, score) values (3, 33, 333);
+```
+
+`id`主键索引
+
+`stu_num` 为唯一索引
+
+`score`普通索引
+
+为了模拟实际场景，需要在每个会话（session）中执行以下两条命令：
+
+```sql
+set autocommit=0; ## 关闭自动提交
+
+START TRANSACTION; ## 开始事务
+```
+
+### 场景一：AB BA
+
+```sql
+# session A
+select * from deadlock where id = 1 for update; 
+
+# session B
+select * from deadlock where id = 2 for update; 
+
+# session A
+select * from deadlock where id = 2 for update;
+## 因为session2 已经给id=2分配了写锁
+
+# session B
+select * from deadlock where id = 1 for update;
+## 1213 - Deadlock found when trying to get lock; try restarting transaction
+```
+
+### 场景二：同一个事务中，S-lock 升级为 X-lock
+
+```sql
+# session A
+SELECT * FROM deadlock WHERE id = 1 LOCK IN SHARE MODE;   
+## 获取S-Lock
+
+# session B
+DELETE FROM deadlock WHERE id = 1;   
+## 想获取X-Lock，但被session A的S-lock 卡住，目前处于waiting lock阶段
+
+# session A
+DELETE FROM deadlock WHERE id = 1;   
+## Error : Deadlock found when trying to get lock; try restarting transaction
+## 想获取X-Lock，sessionA本身拥有S-Lock
+## 但是由于sessionB 申请X-Lock再前##
+## 因此sessionA不能够从S-lock 提升到 X-lock
+## 需要等待sessionB 释放才可以获取，所以造成死锁
+```
+
+### 场景三：主键和二级索引的死锁
+
+```sql
+CREATE TABLE `deadlock_A` (
+  `id` int(11) NOT NULL,
+  `stu_num` int(11) DEFAULT NULL,
+  `score` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_score` (`score`),
+  KEY `idx_stu_num` (`stu_num`) USING BTREE
+) ENGINE=InnoDB;
+
+# deadlock_A 数据
+# select * from deadlock_A
+| id   | stu_num | score |
+| ---- | ------- | ----- |
+| 1    | 11      | 111   |
+| 2    | 33      | 222   |
+| 3    | 22      | 333   |
+| 4    | 44      | 444   |
+```
+
+
+
+```sql
+# session A
+delete from deadlock_A where stu_num > 11;
+## 锁二级索引（stu_num）的顺序：22->33->44  锁主键（id）索引的顺序：3->2->4
+
+# session B
+delete from deadlock_A where score > 111;
+## 锁二级索引（score）的顺序：222->333->444  锁主键（id）索引的顺序：2->3->4
+
+## sessionA锁主键3， sessionB锁主键2
+## sessionA锁主键2， sessionB锁主键3
+## 死锁产生-》AB BA
+## 这个在并发场景，可能会产生。
+```
+
+### 场景四：间隙锁（Gap Lock）
+
+```sql
+CREATE TABLE `t2` (
+  `id` int(11) NOT NULL,
+  `v` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_v` (`v`) USING BTREE
+) ENGINE=InnoDB;
+
+# select * from t2
+| id   | v  	 |
+| ---- | ----- |
+| 2    | 2     |
+| 5    | 5     |
+| 10   | 10    |
+```
+
+#### 间隙锁案例
+
+```sql
+# session A
+delete from test where v=5;
+
+# session B
+insert into t2 (id,v) values (3,3);
+## ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction
+
+insert into t2 (id,v) values (9,9);
+## ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction
+
+insert into t2 (id,v) values (5,11);
+## ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction
+
+insert into t2 (id,v) values (1,1)
+## Affected rows : 1, Time: 5.62sec
+
+insert into t2(id,v) values (10, 10);
+## Affected rows : 1, Time: 10.51sec
+
+insert into t2 (id,v) values (9,11);
+## Affected rows : 1, Time: 15.51sec
+```
+
+看得出锁的是 id=5 & v=[3,10)的记录。
+
+通过上面案例，大概了解间隙锁的范围后，我们来看看死锁场景：
+
+```sql
+# session A
+update t2 set v = 5 where v =5;
+## Affected rows : 1, Time: 12.67sec
+
+# session B
+update t2 set v = 10 where v =10;
+## Affected rows : 1, Time: 12.88sec
+
+# session A
+insert into t2 (id,v) values (7,7);
+## waiting
+
+# session B
+insert into t2 (id,v) values (8,8);
+## Error : Deadlock found when trying to get lock; try restarting transaction
+```
+
+## 场景五：唯一索引
+
+```sql
+CREATE TABLE `t3` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(10),
+  `level` int(11),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_name` (`name`)
+);
+
+INSERT INTO `t3` (`id`, `name`) VALUES (1, 'A');
+```
+
+* 对于insert操作来说，若发生唯一约束冲突，则需要对冲突的唯一索引加上 Share Record Lock + Gap Lock。（即使是RC事务隔离级别）
+
+## 如何避免死锁？
 
 死锁的四个必要条件：**互斥、占有且等待、不可强占用、循环等待**。只要系统发生死锁，这些条件必然成立，但是只要破坏任意一个条件就死锁就不会成立。
 
 在数据库层面，有两种策略通过「打破循环等待条件」来解除死锁状态：
 
--   **设置事务等待锁的超时时间**。当一个事务的等待时间超过该值后，就对这个事务进行回滚，于是锁就释放了，另一个事务就可以继续执行了。在 InnoDB 中，参数 `innodb_lock_wait_timeout` 是用来设置超时时间的，默认值时 50 秒。
-    
-    当发生超时后，就出现下面这个提示：
-    
+- **设置事务等待锁的超时时间**。当一个事务的等待时间超过该值后，就对这个事务进行回滚，于是锁就释放了，另一个事务就可以继续执行了。在 InnoDB 中，参数 `innodb_lock_wait_timeout` 是用来设置超时时间的，默认值时 50 秒。
+
+  当发生超时后，就出现下面这个提示：
 
 ![图片](https://cdn.xiaolincoding.com//mysql/other/c296c1889f0101d335699311b4ef20a8.png)
 
--   **开启主动死锁检测**。主动死锁检测在发现死锁后，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行。将参数 `innodb_deadlock_detect` 设置为 on，表示开启这个逻辑，默认就开启。
-    
-    当检测到死锁后，就会出现下面这个提示：
-    
+- **开启主动死锁检测**。主动死锁检测在发现死锁后，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行。将参数 `innodb_deadlock_detect` 设置为 on，表示开启这个逻辑，默认就开启。
+
+  当检测到死锁后，就会出现下面这个提示：
 
 ![图片](https://cdn.xiaolincoding.com//mysql/other/f380ef357d065498d8d54ad07f145e09.png)
 
 上面这个两种策略是「当有死锁发生时」的避免方式。
 
-我们可以回归业务的角度来预防死锁，对订单做幂等性校验的目的是为了保证不会出现重复的订单，那我们可以直接将 order\_no 字段设置为唯一索引列，利用它的唯一性来保证订单表不会出现重复的订单，不过有一点不好的地方就是在我们插入一个已经存在的订单记录时就会抛出异常。
+我们可以回归业务的角度来预防死锁
+
+* 同顺序：以固定的顺序访问表和行。比如两个更新数据的事务，事务A 更新数据的顺序 为1->2；事务B更新数据的顺序为2->1。这样更可能会造成死锁
+
+- 尽量保持事务简短：大事务更倾向于死锁，如果业务允许，将大事务拆小
+- 一次性锁定：在同一个事务中，尽可能做到一次锁定所需要的所有资源，减少死锁概率
+- 降低隔离级别：如果业务允许，将隔离级别调低也是较好的选择，比如将隔离级别从RR调整为RC，可以避免掉很多因为gap锁造成的死锁
+- 细粒度锁定（行锁）：为表添加合理的索引。可以看到如果不走索引将会为表的每一行记录添加上锁，死锁的概率大大增大
