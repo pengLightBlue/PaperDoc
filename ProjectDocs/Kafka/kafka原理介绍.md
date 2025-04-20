@@ -57,6 +57,7 @@ num.partitions=1</pre>
 
 
 
+
 ## 四、高可靠性存储分析概述
 
 Kafka的高可靠性的保障来源于其健壮的副本(replication)策略。通过调节其副本相关参数，可以使得Kafka在性能和可靠性之间运转的游刃有余。Kafka从0.8.x版本开始提供partition级别的复制,replication的数量可以在$KAFKA_HOME/config/server.properties中配置(default.replication.refactor)。
@@ -81,6 +82,7 @@ drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-3  </pre>
 
 
 
+
 在Kafka文件存储中，同一个topic下有多个不同的partition，每个partiton为一个目录，partition的名称规则为：topic名称+有序序号，第一个序号从0开始计，最大的序号为partition数量减1，partition是实际物理上的概念，而topic是逻辑上的概念。
 
 上面提到partition还可以细分为segment，这个segment又是什么?如果就以partition为最小存储单位，我们可以想象当Kafka producer不断发送消息，必然会引起partition文件的无限扩张，这样对于消息文件的维护以及已经被消费的消息的清理带来严重的影响，所以这里以segment为单位又将partition细分。每个partition(目录)相当于一个巨型文件被平均分配到多个大小相等的segment(段)数据文件中(每个segment 文件中消息数量不一定相等)这种特性也方便old segment的删除，即方便已被消费的消息的清理，提高磁盘的利用率。每个partition只需要支持顺序读写就行，segment的文件生命周期由服务端配置参数(log.segment.bytes，log.roll.{ms,hours}等若干参数)决定。
@@ -97,6 +99,7 @@ log.retention.hours=168 #  一个基于大小的日志保留策略。段将被�
 #log.retention.bytes=1073741824 #  每一个日志段大小的最大值。当到达这个大小时，会生成一个新的片段。
 log.segment.bytes=1073741824 # 检查日志段的时间间隔，看是否可以根据保留策略删除它们
 log.retention.check.interval.ms=300000</pre>
+
 
 
 
@@ -168,6 +171,7 @@ Socket.send(buffer)</pre>
 
 
 
+
 这一过程实际上发生了四次数据拷贝。首先通过系统调用将文件数据读入到内核态Buffer（DMA拷贝），然后应用程序将内存态Buffer数据读入到用户态Buffer（CPU拷贝），接着用户程序通过Socket发送数据时将用户态Buffer数据拷贝到内核态Buffer（CPU拷贝），最后通过DMA拷贝将数据拷贝到NIC Buffer。同时，还伴随着四次上下文切换，如下图所示。
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/843808-20181227142339448-1209004133.png)
@@ -184,6 +188,7 @@ Linux 2.4+内核通过`sendfile`系统调用，提供了零拷贝。数据通过
 
 <pre>@Override public long transferFrom(FileChannel fileChannel, long position, long count) throws IOException { return fileChannel.transferTo(position, count, socketChannel);
 }</pre>
+
 
 
 
@@ -218,9 +223,48 @@ Controller来维护：Kafka集群中的其中一个Broker会被选举为Controll
 
 leader来维护：leader有单独的线程定期检测ISR中follower是否脱离ISR, 如果发现ISR变化，则会将新的ISR的信息返回到Zookeeper的相关节点中。
 
+### HW 的更新流程
 
+#### (1) Leader 副本的 HW 更新
 
+- **触发条件**：当 Follower 副本向 Leader 发送 Fetch 请求时，携带自身 LEO。
+- **计算逻辑**：
+  1. Leader 收集所有 ISR 副本的 LEO（包括自己的 LEO）。
+  2. 取所有 LEO 的最小值作为新 HW。
+  3. 将新 HW 通过响应返回给 Follower。
+- **示例**：
+  - Leader LEO=10，Follower1 LEO=9，Follower2 LEO=8 → HW=8。
+  - 若 Follower2 掉出 ISR，则 HW=9（仅 Leader 和 Follower1 参与计算）。
 
+#### (2) Follower 副本的 HW 更新
+
+- Follower 根据 Leader 返回的 HW 值，与自身 LEO 取较小值更新本地 HW。
+- **规则**：Follower_HW = MIN(Leader_HW, Follower_LEO)。
+
+------
+
+### 3. HW 持久化与容错
+
+- **存储位置**：每个 Broker 的本地文件（如 replication-offset-checkpoint）记录所有分区的 HW。
+- **恢复机制**：Broker 重启时从文件中读取 HW，避免数据丢失或重复消费。
+- **容错性**：若 Leader 宕机，新 Leader 从 ISR 中选出，基于持久化的 HW 继续提供服务。
+
+------
+
+### 4. ISR 动态维护对 HW 的影响
+
+- **ISR 的准入条件**：
+  - Follower 的 LEO ≥ Leader 的 HW。
+  - 同步延迟不超过 replica.lag.time.max.ms（默认 10 秒）。
+- **淘汰机制**：落后于 Leader 的副本会被移出 ISR，不再参与 HW 计算。
+- **示例**：若 Follower 长时间未同步数据，Leader 更新 HW 时仅考虑剩余 ISR 副本的 LEO。
+
+------
+
+### 5. 异常场景处理
+
+- **Follower 数据滞后**：若 Follower 的 LEO 低于 HW，Leader 会推送缺失数据，直至其重新加入 ISR。
+- **Leader 切换**：新 Leader 的 HW 继承自原 Leader 的持久化值，确保消费者可见性不变。
 
 ## 九、数据可靠性和持久性保证
 
@@ -448,6 +492,7 @@ Kafka保证同一consumer group中只有一个consumer会消费某条消息，�
 设置对/consumers/[consumer-group] 的watcher
 设置对／brokers/ids的watcher
 zk下设置watcher的路径节点更改，触发consumer rebalance</pre>
+
 
 
 
