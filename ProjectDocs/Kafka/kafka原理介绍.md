@@ -223,9 +223,9 @@ Controller来维护：Kafka集群中的其中一个Broker会被选举为Controll
 
 leader来维护：leader有单独的线程定期检测ISR中follower是否脱离ISR, 如果发现ISR变化，则会将新的ISR的信息返回到Zookeeper的相关节点中。
 
-### HW 的更新流程
+### HW 的更新
 
-#### (1) Leader 副本的 HW 更新
+#### Leader 副本的 HW 更新
 
 - **触发条件**：当 Follower 副本向 Leader 发送 Fetch 请求时，携带自身 LEO。
 - **计算逻辑**：
@@ -236,14 +236,14 @@ leader来维护：leader有单独的线程定期检测ISR中follower是否脱离
   - Leader LEO=10，Follower1 LEO=9，Follower2 LEO=8 → HW=8。
   - 若 Follower2 掉出 ISR，则 HW=9（仅 Leader 和 Follower1 参与计算）。
 
-#### (2) Follower 副本的 HW 更新
+#### Follower 副本的 HW 更新
 
 - Follower 根据 Leader 返回的 HW 值，与自身 LEO 取较小值更新本地 HW。
 - **规则**：Follower_HW = MIN(Leader_HW, Follower_LEO)。
 
 ------
 
-### 3. HW 持久化与容错
+### HW 持久化与容错
 
 - **存储位置**：每个 Broker 的本地文件（如 replication-offset-checkpoint）记录所有分区的 HW。
 - **恢复机制**：Broker 重启时从文件中读取 HW，避免数据丢失或重复消费。
@@ -251,7 +251,7 @@ leader来维护：leader有单独的线程定期检测ISR中follower是否脱离
 
 ------
 
-### 4. ISR 动态维护对 HW 的影响
+### ISR 动态维护对 HW 的影响
 
 - **ISR 的准入条件**：
   - Follower 的 LEO ≥ Leader 的 HW。
@@ -261,7 +261,7 @@ leader来维护：leader有单独的线程定期检测ISR中follower是否脱离
 
 ------
 
-### 5. 异常场景处理
+### 异常场景处理
 
 - **Follower 数据滞后**：若 Follower 的 LEO 低于 HW，Leader 会推送缺失数据，直至其重新加入 ISR。
 - **Leader 切换**：新 Leader 的 HW 继承自原 Leader 的持久化值，确保消费者可见性不变。
