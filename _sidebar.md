@@ -1,6 +1,7 @@
 <!-- _sidebar.md -->
 
 * [Golang](ProjectDocs/golang/_sidebar.md)
+* [Java](ProjectDocs/java/_sidebar.md)
 * [Mysql](ProjectDocs/mysql/_sidebar.md)
 * [Redis](ProjectDocs/redis/_sidebar.md)    
 * [Kafka](ProjectDocs/Kafka/_sidebar.md)
