@@ -12,7 +12,7 @@ bin/kafka-server-start.sh config/server.properties
 
 nohup bin/kafka-server-start.sh config/server.properties > ./dev/null 2>&1 &
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220812161146385-332776455.png)
+![](../images/kafka/10001.png)
 
 多个kafka的话，在各个虚拟机上运行kafka启动命令多次即可。
 
@@ -22,11 +22,11 @@ nohup bin/kafka-server-start.sh config/server.properties > ./dev/null 2>&1 &
 
 jps -lm
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220812161210221-836644701.png)
+![](../images/kafka/10002.png)
 
 说明没有启动kfka
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220812161224734-562363764.png)
+![](../images/kafka/10003.png)
 
 说明启动kafka了
 
@@ -86,7 +86,7 @@ bin/kafka-topics.sh --list --zookeeper localhost:2181
 
 bin/kafka-topics.sh --describe --zookeeper localhost:2181 --topic my-replicated-topic
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220812161250801-1389051022.png)
+![](../images/kafka/10004.png)
 
 解释：
 
@@ -172,7 +172,7 @@ rmr ./config/topics/topic-name .
 
 在config/server.properties中找到如下的位置
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220812161312458-550425542.png)
+![](../images/kafka/10005.png)
 
 删除log.dirs指定的文件目录，
 
@@ -218,7 +218,7 @@ kafka-consumer-groups.sh --bootstrap-server 172.20.72.93:9092 --describe --group
 
 运行结果：
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220816164455794-344440282.png)
+![](../images/kafka/10006.png)
 
 *   GROUP:消费者组
 *   TOPIC：topic名字
@@ -234,7 +234,7 @@ kafka-consumer-groups.sh --bootstrap-server 172.20.72.93:9092 --describe --group
 
 kafka-consumer-groups.sh --bootstrap-server 172.20.72.93:9092 --all-groups --all-topics --describe
 
-![](https://img2022.cnblogs.com/blog/796632/202208/796632-20220816172442100-1560497638.png)
+![](../images/kafka/10007.png)
 
 ## 修改group消费的offset
 
@@ -513,8 +513,3 @@ session 有效时间，与 consumer 中指定的配置含义相同。
 
 本文总结了平时经常用到的一些 Kafka 配置及命令说明，方便随时查看；喜欢的朋友可以收藏以备不时之需。
 
-
-## 参考文章
-
-https://blog.csdn.net/cao131502
-https://zhuanlan.zhihu.com/p/137811719
