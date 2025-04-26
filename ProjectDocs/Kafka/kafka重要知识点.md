@@ -1,4 +1,4 @@
-## 重要面试知识点
+## Kafka重要知识点
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-75cd70ad3052ba44bf706a3ab39e59d5_720w.webp)
 
@@ -11,7 +11,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 4.  在不同消费者组内，同一个分区可以被多个消费者消费。
 5.  每个消费者组一定会完整消费一个 Topic 下的所有 Partition。
 
-### **消费组存在的意义**
+## 消费组存在的意义
 
 了解了消费者与消费组的关系后，有朋友会比较疑惑消费者组有啥实际存在的意义呢？或者说消费组的作用是什么？
 
@@ -20,7 +20,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 1.  在实际生产中，对于同一个 Topic，可能有 A、B、C 等 N 个消费方想要消费。比如一份用户点击日志，A 消费方想用来做一个用户近 N 天点击过哪些商品；B 消费方想用来做一个用户近 N 天点击过前 TopN 个相似的商品；C 消费方想用来做一个根据用户点击过的商品推荐相关周边的商品需求。对于多应用场景，就可以使用消费组来隔离不同的业务使用场景，从而达到一个 Topic 可以被多个消费组重复消费的目的。
 2.  消费组与 Partition 的消费进度绑定。当有新的消费者加入或者有消费者从消费组退出时，会触发消费组的 Repartition 操作（后面会详细介绍 Repartition）；在 Repartition 前，Partition1 被消费组的消费者 A 进行消费，Repartition 后，Partition1 消费组的消费者 B 进行消费，为了避免消息被重复消费，需要从消费组记录的 Partition 消费进度读取当前消费到的位置（即 OffSet 位置），然后在继续消费，从而达到消费者的平滑迁移，同时也提高了系统的可用性。
 
-## **Repartition 触发时机**
+## Repartition 触发时机
 
 使用过 Kafka 消费者客户端的同学肯定知道，消费者组内偶尔会触发 Repartition 操作，所谓 Repartition 即 Partition 在某些情况下重新被分配给参与消费的消费者。基本可以分为如下几种情况。
 
@@ -31,11 +31,8 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-a9ef6a29cb9ba3456a05ad75cb91cb03_720w.webp)
-
-<figcaption>消费者宕机情况</figcaption>
-
-</figure>
 
 2\. 消费组内新增消费者，触发 Repartition 操作，如下图所示。一般这种情况是为了提高消费端的消费能力，从而加快消费进度。
 
@@ -44,11 +41,10 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-8803223d712fdde035b8e7b9170dd3fb_720w.webp)
 
-<figcaption>新增消费者情况</figcaption>
 
-</figure>
 
 3.Topic 下的 Partition 增多，触发 Repartition 操作，如下图所示。一般这种调整 Partition 个数的情况也是为了提高消费端消费速度的，因为当消费者个数大于等于 Partition 个数时，在增加消费者个数是没有用的（原因是：在一个消费组内，消费者:Partition = 1:N，当 N 小于 1 时，相当于消费者过剩了），所以一方面增加 Partition 个数同时增加消费者个数可以提高消费端的消费速度。
 
@@ -57,17 +53,16 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-8f1a427c6842d9babf139454ce23cfa3_720w.webp)
 
-<figcaption>新增Partition个数情况</figcaption>
 
-</figure>
 
-## **消费者与 ZK 的关系**
+## 消费者与 ZK 的关系
 
 众所周知，ZK 不仅保存了消费者消费 partition 的进度，同时也保存了消费组的成员列表、partition 的所有者。消费者想要消费 Partition，需要从 ZK 中获取该消费者对应的分区信息及当前分区对应的消费进度，即 OffSert 信息。那么 Partition 应该由那个消费者进行消费，决定因素有哪些呢？从之前的图中不难得出，两个重要因素分别是：消费组中存活的消费者列表和 Topic 对应的 Partition 列表。通过这两个因素结合 Partition 分配算法，即可得出消费者与 Partition 的对应关系，然后将信息存储到 ZK 中。Kafka 有高级 API 和低级 API，如果不需要操作 OffSet 偏移量的提交，可通过高级 API 直接使用，从而降低使用者的难度。对于一些比较特殊的使用场景，比如想要消费特定 Partition 的信息，Kafka 也提供了低级 API 可进行手动操作。
 
-## **消费端工作流程**
+## 消费端工作流程
 
 在介绍消费端工作流程前，先来熟悉一下用到的一些组件。
 
@@ -82,11 +77,10 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-122b4a706de39655d257928005a83ff1_720w.webp)
 
-<figcaption>消费端工作流程</figcaption>
 
-</figure>
 
 我们在从消费者与 ZK 的角度来看看其工作流程是什么样的？
 
@@ -95,11 +89,12 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-4ed25ebb9236986b2084ce8a042f65b9_720w.webp)
 
-<figcaption>消费端与ZK之间的工作流程</figcaption>
 
-</figure>
+
+## Offset提交流程
 
 从上图可以看出，首先拉取线程每拉取一次消息，同步更新一次拉取状态，其作用是为了下一次拉取消息时能够拉取到最新产生的消息；拉取线程将拉取到的消息写入到队列中等待消费消费线程去真正读取处理。消费线程以轮询的方式持续读取队列中的消息，只要发现队列中有消息就开始消费，消费完消息后更新消费进度，此处需要注意的是，消费线程不是每次都和 ZK 同步消费进度，而是将消费进度暂时写入本地。这样做的目的是为了减少消费者与 ZK 的频繁同步消息，从而降低 ZK 的压力。
 
@@ -111,8 +106,107 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 >   3. 消费者更新本地偏移量，并定期提交到协调器。
 >
 > 也就是说跟zookeeper交互的目的是为了获取offset，获取到之后就可以通过api去broker请求对应的消息，后面只需要定期将消费到的offset位置持久化到zookeeper上
+>
+> 注：Kafka 0.9前版本offset存储在zookeeper，0.9以及之后存储在内部topic __consumer_offsets
 
-## **消费者的三种消费情况**
+
+
+Kafka 消费者将 offset 提交到 `__consumer_offsets` 的流程是一个涉及协调器、内部主题和分区机制的复杂过程。以下是详细的流程说明：
+
+------
+
+### 1. 确定协调器（Coordinator）
+
+消费者需要找到负责管理其消费者组的 **协调器（Coordinator）**，协调器是 Kafka 集群中的一个 Broker。具体步骤如下：
+
+1. **计算分区**：消费者根据消费者组 ID（`group.id`）的哈希值，对 `__consumer_offsets` 的分区数取模（默认 50 个分区），确定目标分区。
+   - 公式：`partition = hash(group.id) % 50`
+2. **找到 Leader Broker**：目标分区的 Leader 所在的 Broker 即为该消费者组的协调器。
+3. **连接协调器**：消费者与协调器建立连接，后续的 offset 提交和 Rebalance 均通过此 Broker 完成。
+
+------
+
+### 2. Offset 提交的触发条件
+
+消费者提交 offset 的触发方式有两种：
+
+1. **自动提交**（默认）：
+   - 由消费者后台线程周期性触发，间隔由 `auto.commit.interval.ms` 配置（默认 5 秒）。
+   - 消费者拉取消息后，若超过时间间隔未提交，则自动提交最后拉取的 offset。
+2. **手动提交**：
+   - 调用 `commitSync()`（同步提交）或 `commitAsync()`（异步提交）显式提交。
+   - 通常在业务逻辑处理完成后手动提交，确保“至少一次”或“精确一次”语义。
+
+------
+
+### 3. Offset 提交的详细流程
+
+#### (1) 消费者准备提交请求
+
+消费者将待提交的 offset 按分区整理，生成 **OffsetCommitRequest**，包含以下信息：
+
+- **消费者组 ID**：标识所属的消费者组。
+- **Topic-Partition 列表**：每个分区的当前 offset 值。
+- **元数据**（可选）：自定义信息（如处理时间戳）。
+
+#### (2) 发送 OffsetCommitRequest 到协调器
+
+消费者向协调器发送请求，协调器验证请求的合法性：
+
+- 消费者是否有权限提交 offset（例如是否为消费者组的有效成员）。
+- 分区是否属于当前消费者组的分配范围。
+
+#### (3) 协调器写入 __consumer_offsets
+
+协调器将 offset 写入 `__consumer_offsets` 主题的对应分区：
+
+- **Key**：由 `group.id`、`topic` 和 `partition` 组成，唯一标识一个分区的 offset。
+- **Value**：包含 offset 值、元数据和时间戳。
+- **副本同步**：由于 `__consumer_offsets` 的 `acks=all`，需等待所有副本确认写入成功。
+
+#### (4) 响应消费者
+
+- **成功**：协调器返回成功响应，消费者记录提交状态。
+- **失败**：若写入失败（如副本不可用），协调器返回错误，消费者根据配置的重试策略（如 `retries`）重新提交。
+
+------
+
+### 4. 数据可靠性保障
+
+Kafka 通过以下机制确保 offset 提交的可靠性：
+
+1. **副本机制**：`__consumer_offsets` 默认配置为多副本（`replication.factor=3`），数据持久化到多个 Broker。
+2. **高水位（HW）同步**：所有副本同步完成才确认写入，避免数据丢失。
+3. **消费者重试**：手动提交时，若失败可重试；自动提交则由后台线程周期性重试。
+
+------
+
+### 5. 示例场景
+
+假设消费者组 `group-1` 订阅了 Topic `orders`（3 个分区 P0、P1、P2），当前 offset 分别为 100、150、200。
+
+1. **自动提交**：
+   - 消费者拉取消息后，每隔 5 秒触发提交。
+   - 后台线程将 `orders-0:100`, `orders-1:150`, `orders-2:200` 封装为 OffsetCommitRequest，发送到协调器。
+   - 协调器写入 `__consumer_offsets`，返回成功响应。
+2. **手动提交**：
+   - 消费者处理完 P0 的消息后调用 `commitSync()`，显式提交 `orders-0:100`。
+   - 若提交失败（如网络抖动），消费者可选择重试或抛出异常。
+
+------
+
+### 6. 关键配置参数
+
+| **参数**                    | **说明**                                                 |
+| :-------------------------- | :------------------------------------------------------- |
+| `enable.auto.commit`        | 是否启用自动提交（默认 `true`）。                        |
+| `auto.commit.interval.ms`   | 自动提交间隔（默认 5000 毫秒）。                         |
+| `offsets.retention.minutes` | `__consumer_offsets` 中 offset 的保留时间（默认 7 天）。 |
+| `acks`（Broker 配置）       | `__consumer_offsets` 的写入确认机制（默认 `all`）。      |
+
+
+
+## 消费者的三种消费情况
 
 消费者从服务端的 Partition 上拉取到消息，消费消息有三种情况，分别如下：
 
@@ -120,7 +214,7 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 2.  至多一次。即一条消息最多可以被消费一次，消息不可能被重复消费，但是消息有可能丢失。
 3.  正好一次。即一条消息正好被消费一次，消息不可能丢失也不可能被重复消费。
 
-### **1.至少一次**
+### 1.至少一次
 
 消费者读取消息，先处理消息，在保存消费进度。消费者拉取到消息，先消费消息，然后在保存偏移量，当消费者消费消息后还没来得及保存偏移量，则会造成消息被重复消费。如下图所示：
 
@@ -129,13 +223,12 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-1a047ed616ba44daebdb4b6ce786a61a_720w.webp)
 
-<figcaption>先消费后保存消费进度</figcaption>
 
-</figure>
 
-### **2.至多一次**
+### 2.至多一次
 
 消费者读取消息，先保存消费进度，在处理消息。消费者拉取到消息，先保存了偏移量，当保存了偏移量后还没消费完消息，消费者挂了，则会造成未消费的消息丢失。如下图所示：
 
@@ -144,13 +237,12 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-1f9f91ae54396c5e5d93ae89251eb1ed_720w.webp)
 
-<figcaption>先保存消费进度后消费消息</figcaption>
 
-</figure>
 
-### **3.正好一次**
+### 3.正好一次
 
 正好消费一次的办法可以通过将消费者的消费进度和消息处理结果保存在一起。只要能保证两个操作是一个原子操作，就能达到正好消费一次的目的。通常可以将两个操作保存在一起，比如 HDFS 中。正好消费一次流程如下图所示。
 
@@ -159,26 +251,22 @@ Kafka 消费端确保一个 Partition 在一个消费者组内只能被一个消
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-a0bbb114e2ad551227f81c1f26d4bd5d_720w.webp)
 
-<figcaption>正好消费一次</figcaption>
 
-</figure>
 
 ## Partition、Replica、Log 和 LogSegment 的关系
 
 假设有一个 Kafka 集群，Broker 个数为 3，Topic 个数为 1，Partition 个数为 3，Replica 个数为 2。Partition 的物理分布如下图所示。
 
-<figure data-size="normal">
 
 
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-f8f21631b138321f25c8821c677c5579_720w.webp)
 
-<figcaption>Partition分布图</figcaption>
 
-</figure>
 
 从上图可以看出，该 Topic 由三个 Partition 构成，并且每个 Partition 由主从两个副本构成。每个 Partition 的主从副本分布在不同的 Broker 上，通过这点也可以看出，当某个 Broker 宕机时，可以将分布在其他 Broker 上的从副本设置为主副本，因为只有主副本对外提供读写请求，当然在最新的 2.x 版本中从副本也可以对外读请求了。将主从副本分布在不同的 Broker 上从而提高系统的可用性。
 
@@ -192,16 +280,13 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 ## 写入消息流程分析
 
-<figure data-size="normal">
 
 
 
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-eb66e4ecf7cf07fcb6b12029bfdd9b71_720w.webp)
 
-<figcaption>消息写入及落盘流程</figcaption>
 
-</figure>
 
 流程解析
 
@@ -220,17 +305,53 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-6e993c95decd5d274b032cd423936504_720w.webp)
 
-<figcaption>消息构成细节图</figcaption>
 
-</figure>
 
 一条消息由如下三部分构成：
 
 *   **OffSet：偏移量，消息在客户端发送前将相对偏移量存储到该位置，当消息存储到 LogSegment 前，先将其修改为绝对偏移量在写入磁盘。**
 *   **Size：本条 Message 的内容大小**
 *   **Message：消息的具体内容，其具体又由 7 部分组成，crc 用于校验消息，Attribute 代表了属性，key-length 和 value-length 分别代表 key 和 value 的长度，key 和 value 分别代表了其对应的内容。**
+
+
+
+在 Kafka 中，**同步发送消息**（即调用 `producer.send(record).get()`）和**消息的批处理机制**（消息累积成批次再发送）是两个独立的概念。即使采用同步方式发送消息，Kafka Producer 依然会尽可能累积一批消息再批量发送到 Broker，以提高吞吐量。以下是详细说明：
+
+------
+
+### 1. 同步发送与批处理的关系
+
+#### **(1) 同步发送的定义**
+
+- **同步发送**：调用 `send()` 方法后立即调用 `get()`，阻塞当前线程直到 Broker 返回写入结果的确认（ACK）。
+
+  ```
+  // 同步发送示例（Java）
+  producer.send(record).get(); // 阻塞直到收到ACK
+  ```
+
+- **特点**：
+
+  - **阻塞性**：发送线程必须等待消息写入 Broker 完成才能继续。
+  - **高可靠性**：可立即感知发送失败并进行重试。
+
+#### (2) 批处理机制
+
+- **批处理（Batching）**：Producer 会将多条消息累积到一个批次（`RecordBatch`），满足以下条件之一时触发发送：
+  - **批次大小达到阈值**：由 `batch.size` 控制（默认 16KB）。
+  - **等待时间超时**：由 `linger.ms` 控制（默认 0，即立即发送，不等待）。
+- **优势**：
+  - **减少网络请求次数**：提升吞吐量。
+  - **压缩优化**：批量压缩（如 Snappy、GZIP）效率更高。
+
+#### (3) 同步发送下批处理的行为
+
+- **关键结论**：**同步发送不关闭批处理机制**。
+  - Producer 仍会尝试累积消息到批次中，直到满足 `batch.size` 或 `linger.ms` 条件，再将整个批次一次性发送到 Broker。
+  - **同步发送仅影响线程阻塞逻辑**，不改变消息累积的底层机制。
 
 ### 消息偏移量的计算过程
 
@@ -269,6 +390,7 @@ Partition 的实际物理存储是以 Log 文件的形式展示的，而每个 L
 
 
 
+
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-9417ca60a0c5e9474ec49a77fff18b1b_720w.webp)
 
 **Broker 处理 Fetch 请求**
@@ -283,9 +405,9 @@ Broker 收到请求后，需从日志文件中查找消息，流程如下：
   - `<base_offset>.index`（存储位移索引）
   - `<base_offset>.timeindex`（存储时间戳索引）
 
-  例如：
+  **新段的基准偏移量 = 上一个段的最后一个消息的偏移量 + 1**
 
-  复制
+  例如：
 
   ```
   topic-test-0/
@@ -351,6 +473,7 @@ Broker 收到请求后，需从日志文件中查找消息，流程如下：
 设置为 1 时代表当 Leader 状态的 Partition 接收到消息并持久化时就认为消息发送成功，如果 ISR 列表的 Replica 还没来得及同步消息，Leader 状态的 Partition 对应的 Broker 宕机，则消息有可能丢失。
 
 <figure data-size="normal">
+
 
 
 
@@ -446,24 +569,53 @@ Kafka 官方提供了多种压缩协议，包括 gzip、snappy、lz4 等等，�
 
 ## 为什么 Kafka 不支持读写分离？
 
-这个问题有个先决条件，我们只讨论 Kafka0.9 版本的情况。对于高版本，从 Partition 也可以承担读请求了，这里不多赘述。
+Kafka 不支持全面的读写分离（即主写从读）主要源于其设计理念、同步机制及适用场景的特殊性，尽管从 2.4 版本开始支持有限度的读写分离（如允许 Follower 处理只读请求），但在多数场景下仍以主写主读（Leader 处理读写）为主。以下是具体原因分析：
 
-Kafka 如果支持读写分离的话，有如下几个问题。
+------
 
-1.  **系统设计的复杂度会比较大，当然这个比较牵强，毕竟高版本的 Kafka 已经实现了。**
+### 1. 场景不适用
 
-<figure data-size="normal">
+Kafka 的核心场景是**高吞吐的实时数据流处理**和**日志收集**，其读写负载通常对等且频繁。
 
+- **读写分离的适用条件**：适用于读负载远高于写负载的场景（如传统数据库），但 Kafka 的读写操作频率相近，读写分离无法显著提升性能，反而可能因同步延迟导致数据不一致。
+- **负载均衡效果**：Kafka 通过分区机制将 Leader 副本均匀分布在 Broker 上，天然实现读写负载均衡。若强制读写分离，可能因 Follower 节点同时承担其他分区的 Leader 职责，导致资源竞争，整体性能反而下降。
 
+------
 
+### 2. 同步机制与数据一致性
 
-![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/v2-98093ad82970feb7a0c52954c6942aa1_720w.webp)
+Kafka 的副本同步采用 **PULL 模式**（Follower 主动从 Leader 拉取数据），存在以下问题：
 
-</figure>
+- **复制延迟**：数据从 Leader 写入到同步至 Follower 需经历网络传输、磁盘持久化等步骤，导致 Follower 数据滞后于 Leader。若允许读 Follower，客户端可能读到过时数据，破坏一致性。Leader取ISR Follower fetch请求里最小的LEO作为HW，更新本地HW并将其response给Follower，所以Follower HW的更新会滞后于Leader
+- **不一致窗口**：在异步同步过程中，不同 Follower 的同步进度可能不一致，导致多次读取同一分区的不同副本时出现数据跳跃（如第一次读到最新值，第二次读到旧值），无法保证单调读一致性。
 
-**2\. 从上图可以看出，从从 Partition 上读取数据会有两个问题。一、数据从主 Partition 上同步到从 Partition 有数据延迟问题，因为数据从生产到消费会经历 3 次网络传输才能够被消费，对于时效性要求比较高的场景本身就不适合了。二、数据一致性问题，假设主 Partition 将数据第一次修改成了 A，然后又将该数据修改成了 B，由于从主 Partition 同步到从 Partition 会有延迟问题，所以也就会产生数据一致性问题。**
+------
 
-分析得出，通过解决以上问题来换取从 Partition 承担读请求，成本可想而知，而且对于写入压力大，读取压力小的场景，本身也就没有什么意义了。
+### 3. 主写主读的优势
+
+Kafka 主写主读模型具有以下优势：
+
+- **简化架构**：无需处理主从同步延迟带来的复杂性，代码实现更简洁，减少潜在错误。
+- **高效负载均衡**：通过分区 Leader 的均匀分布，每个 Broker 的读写压力天然均衡。例如，一个 Broker 可能同时是多个分区的 Leader，分散了整体负载。
+- **强一致性保障**：所有读写操作均通过 Leader，确保客户端始终访问最新数据，避免因副本同步延迟导致的一致性问题。
+
+------
+
+### 4. 设计初衷与权衡
+
+Kafka 的设计目标是**高吞吐、低延迟的分布式日志系统**，而非传统数据库。
+
+- **日志系统特性**：日志数据需严格保序且快速写入，主写主读模式通过顺序追加写入和批量读取优化性能，更适合 Kafka 的核心场景。
+- **权衡收益与成本**：实现全面读写分离需额外处理同步延迟、数据一致性等问题，而 Kafka 通过分区和副本机制已满足多数场景需求，引入读写分离的收益有限。
+
+------
+
+### 5. 有限度的读写分离适用场景
+
+自 Kafka 2.4 起，允许 Follower 处理**只读请求**（如跨机房消费），但其适用性受限：
+
+- **低一致性需求**：仅适用于容忍数据延迟的场景（如离线分析），不适用于实时处理。
+- **性能瓶颈**：Follower 的读取效率可能低于 Leader（尤其在同步延迟较高时），无法显著提升吞吐量。
 
 ## 总结
 
@@ -563,7 +715,3 @@ Kafka集群中有一个broker会被选举为Controller，负责管理集群broke
 3.  对于单节点使用了顺序读写，顺序读写是指的文件的顺序追加，减少了磁盘寻址的开销，相比随机写速度提升很多
 4.  使用了零拷贝技术，不需要切换到用户态，在内核态即可完成读写操作，且数据的拷贝次数也更少。
 
-## 参考文章
-
-https://blog.csdn.net/cao131502
-https://zhuanlan.zhihu.com/p/137811719
