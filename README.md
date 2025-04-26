@@ -92,9 +92,10 @@
     * [数据库和缓存如何保证一致性](/ProjectDocs/redis/数据库和缓存如何保证一致性.md)
   * [Redis分布式锁](/ProjectDocs/redis/Redis分布式锁.md)        
 * Kafka
-  * [Kafka是什么](ProjectDocs/Kafka/Kafka是什么.md)
-  * [Kafka常见问题总结](ProjectDocs/Kafka/Kafka常见问题总结.md)
+  * [kafka是什么](ProjectDocs/Kafka/Kafka是什么.md)
+  * [kafka一条消息存到Broker的过程](ProjectDocs/Kafka/Kafka一条消息存到Broker的过程.md)
   * [kafka原理介绍](ProjectDocs/Kafka/kafka原理介绍.md)
+  * [kafka常见命令及配置总结](ProjectDocs/Kafka/Kafka常见命令及配置总结.md)
   * [kafka架构介绍](ProjectDocs/Kafka/kafka架构介绍.md)
   * [kafka集群工作原理](ProjectDocs/Kafka/kafka集群工作原理.md)
   * [kafka重要知识点](ProjectDocs/Kafka/kafka重要知识点.md)
