@@ -228,7 +228,19 @@ func (m *Map) LoadAndDelete(key interface{}) (value interface{}, loaded bool) {
 
 ## 总结
 
-可见，通过这种读写分离的设计，解决了并发情况的写入安全，又使读取速度在大部分情况可以接近内建 `map`，非常适合读多写少的情况。
+可见，通过这种读写分离的设计，解决了并发情况的写入安全，又使读取速度在大部分情况可以接近内建 `map`，非常适合读多写少的情况。关键要点如下：
+
+**dirty 是 read 的超集：**
+
+* 在迁移前，dirty 一定包含所有 read 中已有的 key（即使值被修改），因此覆盖后 read 会得到最新值。
+
+**amended 标志的作用**
+
+* 如果 read 和 dirty 不一致，amended=true。迁移后 amended=false（因为 read 和 dirty 一致）。
+
+**并发读写冲突**
+
+* 如果迁移过程中有其他协程 同时写入，新数据会直接写入 dirty，但此时 dirty 已被清空，需要重建；重建后的 dirty 会包含 read 的最新数据，保证一致性。
 
 `sync.Map` 还有一些其他方法：
 
