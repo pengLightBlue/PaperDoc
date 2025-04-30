@@ -2,6 +2,7 @@
 
 * Algorithm
   * [数据结构与算法](ProjectDocs/algorithm/数据结构与算法.md)  
+  * [链表](ProjectDocs/algorithm/链表.md)  
   * [如何判断回文链表](ProjectDocs/algorithm/如何判断回文链表.md)  
   * [字符串匹配之滑动窗口](ProjectDocs/algorithm/滑动窗口思想.md)  
   * [合并区间](ProjectDocs/algorithm/合并区间.md)  
