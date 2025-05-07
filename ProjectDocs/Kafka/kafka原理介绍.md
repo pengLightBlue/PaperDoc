@@ -59,6 +59,7 @@ num.partitions=1</pre>
 
 
 
+
 ## 四、高可靠性存储分析概述
 
 Kafka的高可靠性的保障来源于其健壮的副本(replication)策略。通过调节其副本相关参数，可以使得Kafka在性能和可靠性之间运转的游刃有余。Kafka从0.8.x版本开始提供partition级别的复制,replication的数量可以在$KAFKA_HOME/config/server.properties中配置(default.replication.refactor)。
@@ -85,23 +86,27 @@ drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-3  </pre>
 
 
 
+
 在Kafka文件存储中，同一个topic下有多个不同的partition，每个partiton为一个目录，partition的名称规则为：topic名称+有序序号，第一个序号从0开始计，最大的序号为partition数量减1，partition是实际物理上的概念，而topic是逻辑上的概念。
 
 上面提到partition还可以细分为segment，这个segment又是什么?如果就以partition为最小存储单位，我们可以想象当Kafka producer不断发送消息，必然会引起partition文件的无限扩张，这样对于消息文件的维护以及已经被消费的消息的清理带来严重的影响，所以这里以segment为单位又将partition细分。每个partition(目录)相当于一个巨型文件被平均分配到多个大小相等的segment(段)数据文件中(每个segment 文件中消息数量不一定相等)这种特性也方便old segment的删除，即方便已被消费的消息的清理，提高磁盘的利用率。每个partition只需要支持顺序读写就行，segment的文件生命周期由服务端配置参数(log.segment.bytes，log.roll.{ms,hours}等若干参数)决定。
 
 
 
-
-
-
-<pre> #在强制刷新数据到磁盘允许接收消息的数量
-#log.flush.interval.messages=10000 # 在强制刷新之前，消息可以在日志中停留的最长时间
-#log.flush.interval.ms=1000 #一个日志的最小存活时间，可以被删除
-log.retention.hours=168 #  一个基于大小的日志保留策略。段将被从日志中删除只要剩下的部分段不低于log.retention.bytes。
-#log.retention.bytes=1073741824 #  每一个日志段大小的最大值。当到达这个大小时，会生成一个新的片段。
-log.segment.bytes=1073741824 # 检查日志段的时间间隔，看是否可以根据保留策略删除它们
-log.retention.check.interval.ms=300000</pre>
-
+```
+# 在强制刷新数据到磁盘允许接收消息的数量
+log.flush.interval.messages=10000 
+# 在强制刷新之前，消息可以在日志中停留的最长时间
+log.flush.interval.ms=1000 
+# 一个日志的最小存活时间，可以被删除
+log.retention.hours=168 
+# 一个基于大小的日志保留策略。段将被从日志中删除只要剩下的部分段不低于
+log.retention.bytes=1073741824 
+#  每一个日志段大小的最大值。当到达这个大小时，会生成一个新的片段。
+log.segment.bytes=1073741824 
+# 检查日志段的时间间隔，看是否可以根据保留策略删除它们
+log.retention.check.interval.ms=300000
+```
 
 
 
@@ -176,6 +181,7 @@ Socket.send(buffer)</pre>
 
 
 
+
 这一过程实际上发生了四次数据拷贝。首先通过系统调用将文件数据读入到内核态Buffer（DMA拷贝），然后应用程序将内存态Buffer数据读入到用户态Buffer（CPU拷贝），接着用户程序通过Socket发送数据时将用户态Buffer数据拷贝到内核态Buffer（CPU拷贝），最后通过DMA拷贝将数据拷贝到NIC Buffer。同时，还伴随着四次上下文切换，如下图所示。
 
 ![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/843808-20181227142339448-1209004133.png)
@@ -188,15 +194,11 @@ Linux 2.4+内核通过`sendfile`系统调用，提供了零拷贝。数据通过
 
 从具体实现来看，Kafka的数据传输通过TransportLayer来完成，其子类`PlaintextTransportLayer`通过[Java NIO](http://www.jasongj.com/java/nio_reactor/)的FileChannel的`transferTo`和`transferFrom`方法实现零拷贝，如下所示。
 
-
-
-<pre>@Override public long transferFrom(FileChannel fileChannel, long position, long count) throws IOException { return fileChannel.transferTo(position, count, socketChannel);
-}</pre>
-
-
-
-
-
+```java
+@Override public long transferFrom(FileChannel fileChannel, long position, long count) throws IOException { 
+  return fileChannel.transferTo(position, count, socketChannel);
+}
+```
 
 **注：** `transferTo`和`transferFrom`并不保证一定能使用零拷贝。实际上是否能使用零拷贝与操作系统相关，如果操作系统提供`sendfile`这样的零拷贝系统调用，则这两个方法会通过这样的系统调用充分利用零拷贝的优势，否则并不能通过这两个方法本身实现零拷贝。
 
