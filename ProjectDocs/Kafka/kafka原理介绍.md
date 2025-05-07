@@ -48,15 +48,13 @@ Kafka通过Zookeeper管理集群配置，选举leader，以及在consumer group�
 
 
 
-<pre># The default number of log partitions per topic. More partitions allow greater
+```
+# The default number of log partitions per topic. More partitions allow greater
 # parallelism for consumption, but this will also result in more files across
 # the brokers.
 #默认partitions数量
-num.partitions=1</pre>
-
-
-
-
+num.partitions=1
+```
 
 
 
@@ -74,16 +72,12 @@ Kafka中消息是以topic进行分类的，生产者通过topic向Kafka broker�
 
 
 
-
-
-<pre>drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-0 
+```
+drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-0 
 drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-1 
 drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-2 
-drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-3  </pre>
-
-
-
-
+drwxr-xr-x 2 root root 4096 Apr 10 16:10 topic_zzh_test-3 
+```
 
 
 
@@ -109,39 +103,98 @@ log.retention.check.interval.ms=300000
 ```
 
 
+segment文件由两部分组成，分别为“.index”文件和“.log”文件，分别表示为segment索引文件和数据文件。这两个文件的命令规则为：partition全局的第一个segment从0开始，后续每个segment文件名为上一个segment文件最后一条消息的offset值+1，数值大小为64位，20位数字字符长度，没有数字用0填充，并且index里面的索引是稀疏索引，如下：
+
+```
+00000000000000000000.index 00000000000000000000.log 00000000000000000004.index 00000000000000000004.log 
+00000000000000000008.index 00000000000000000008.log 
+```
+
+> 图中例子是设置了强制 Kafka 在段文件达到 1 KB 时滚动以及禁用基于时间的滚动（仅依赖大小），设置为MAX值
+>
+> log.segment.bytes: "1024"
+>
+> kafka_log_roll_ms: "9223372036854775807"
+
+00000000000000000000.index
+
+```shell
+[appuser@kafka1 test-topic-0]$ kafka-dump-log --files 00000000000000000000.index --print-data-log
+Dumping 00000000000000000000.index
+offset: 0 position: 0
+```
+
+00000000000000000000.log 
+
+```shell
+[appuser@kafka1 test-topic-0]$ kafka-dump-log --files 00000000000000000000.log --print-data-log
+Dumping 00000000000000000000.log
+Log starting offset: 0
+baseOffset: 0 lastOffset: 0 count: 1 baseSequence: 0 lastSequence: 0 producerId: 0 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 0 CreateTime: 1746591178220 size: 495 magic: 2 compresscodec: none crc: 1738099099 isvalid: true
+| offset: 0 CreateTime: 1746591178220 keySize: -1 valueSize: 425 sequence: 0 headerKeys: [] payload: Apache Kafka is a distributed streaming platform that enables you to build real-time streaming data pipelines and applications. Setting up Kafka can be complex, but Docker Compose simplifies the process by defining and running multi-container Docker applications. This guide provides a step-by-step approach to creating a Kafka topic using Docker Compose, making it accessible for developers and DevOps professionals alike.
 
 
+baseOffset: 1 lastOffset: 1 count: 1 baseSequence: 0 lastSequence: 0 producerId: 1 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 495 CreateTime: 1746591185104 size: 154 magic: 2 compresscodec: none crc: 60619224 isvalid: true
+| offset: 1 CreateTime: 1746591185104 keySize: -1 valueSize: 84 sequence: 0 headerKeys: [] payload: Docker Compose: A tool for defining and running multi-container Docker applications.
+baseOffset: 2 lastOffset: 2 count: 1 baseSequence: 0 lastSequence: 0 producerId: 2 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 649 CreateTime: 1746591201143 size: 238 magic: 2 compresscodec: none crc: 3698716342 isvalid: true
+| offset: 2 CreateTime: 1746591201143 keySize: -1 valueSize: 168 sequence: 0 headerKeys: [] payload: Replace YourTopicName with the desired name for your Kafka topic. The KAFKA_CREATE_TOPICS environment variable format is TopicName:NumberOfPartitions:ReplicationFactor.
 
 
-segment文件由两部分组成，分别为“.index”文件和“.log”文件，分别表示为segment索引文件和数据文件。这两个文件的命令规则为：partition全局的第一个segment从0开始，后续每个segment文件名为上一个segment文件最后一条消息的offset值，数值大小为64位，20位数字字符长度，没有数字用0填充，如下：
+baseOffset: 3 lastOffset: 3 count: 1 baseSequence: 0 lastSequence: 0 producerId: 3 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 887 CreateTime: 1746591208291 size: 123 magic: 2 compresscodec: none crc: 3174751501 isvalid: true
+| offset: 3 CreateTime: 1746591208291 keySize: -1 valueSize: 55 sequence: 0 headerKeys: [] payload: You should see YourTopicName listed among the topics.
+```
+
+00000000000000000004.index
+
+```shell
+[appuser@kafka1 test-topic-0]$ kafka-dump-log --files 00000000000000000004.index --print-data-log
+Dumping 00000000000000000004.index
+offset: 4 position: 0
+```
+
+00000000000000000004.log 
+
+```shell
+[appuser@kafka1 test-topic-0]$ kafka-dump-log --files 00000000000000000004.log --print-data-log
+Dumping 00000000000000000004.log
+Log starting offset: 4
+baseOffset: 4 lastOffset: 4 count: 1 baseSequence: 0 lastSequence: 0 producerId: 4 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 0 CreateTime: 1746591213750 size: 175 magic: 2 compresscodec: none crc: 778754623 isvalid: true
+| offset: 4 CreateTime: 1746591213750 keySize: -1 valueSize: 105 sequence: 0 headerKeys: [] payload: After executing the command, you can type messages into the console. Press Ctrl+D to send the messages.
 
 
+baseOffset: 5 lastOffset: 5 count: 1 baseSequence: 0 lastSequence: 0 producerId: 5 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 175 CreateTime: 1746599240592 size: 145 magic: 2 compresscodec: none crc: 317371178 isvalid: true
+| offset: 5 CreateTime: 1746599240592 keySize: -1 valueSize: 75 sequence: 0 headerKeys: [] payload: Open another terminal session, access the Kafka container again, and run:
 
 
+baseOffset: 6 lastOffset: 6 count: 1 baseSequence: 0 lastSequence: 0 producerId: 6 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 320 CreateTime: 1746599245393 size: 249 magic: 2 compresscodec: none crc: 715146949 isvalid: true
+| offset: 6 CreateTime: 1746599245393 keySize: -1 valueSize: 179 sequence: 0 headerKeys: [] payload: By default the docker creates topics defined with KAFKA_CREATE_TOPICS variable in docker-compose.yaml file. But still you can create new Kafka topics with the following command:
 
 
+baseOffset: 7 lastOffset: 7 count: 1 baseSequence: 0 lastSequence: 0 producerId: 7 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 569 CreateTime: 1746599250095 size: 239 magic: 2 compresscodec: none crc: 811968735 isvalid: true
+| offset: 7 CreateTime: 1746599250095 keySize: -1 valueSize: 169 sequence: 0 headerKeys: [] payload: NOTE: Due to limitations in metric names, topics with a period (‘.’) or underscore (‘_’) could collide. To avoid issues it is best to use either, but not both.
+```
 
+00000000000000000008.index
 
-<pre>00000000000000000000.index 00000000000000000000.log 00000000000000170410.index 00000000000000170410.log 00000000000000239430.index 00000000000000239430.log  </pre>
+```shell
+[appuser@kafka1 test-topic-0]$ kafka-dump-log --files 00000000000000000008.index --print-data-log
+Dumping 00000000000000000008.index
+offset: 8 position: 0
+```
 
+00000000000000000008.log 
 
+```shell
+[appuser@kafka1 test-topic-0]$ kafka-dump-log --files 00000000000000000008.log --print-data-log
+Dumping 00000000000000000008.log
+Log starting offset: 8
+baseOffset: 8 lastOffset: 8 count: 1 baseSequence: 0 lastSequence: 0 producerId: 8 producerEpoch: 0 partitionLeaderEpoch: 0 isTransactional: false isControl: false deleteHorizonMs: OptionalLong.empty position: 0 CreateTime: 1746599255177 size: 542 magic: 2 compresscodec: none crc: 726286803 isvalid: true
+| offset: 8 CreateTime: 1746599255177 keySize: -1 valueSize: 472 sequence: 0 headerKeys: [] payload: You’ve now successfully created a Kafka topic using Docker Compose and verified its functionality by producing and consuming messages. This setup not only simplifies the process of managing Kafka but also provides a scalable and easily reproducible environment for your streaming applications. Whether you’re developing locally or deploying in a production environment, Docker Compose with Kafka offers a powerful toolset to streamline your data streaming pipelines.
+```
 
+> 日志里面的换行符是文本输入的时候带入的，不是日志格式本身有换行
 
-以上面的segment文件为例，展示出segment：00000000000000170410的“.index”文件和“.log”文件的对应的关系，如下图：
-
-![](https://java-tutorial.oss-cn-shanghai.aliyuncs.com/843808-20181201224133022-2085407889.png)
-
-
-
-
-
-如上图，“.index”索引文件存储大量的元数据，“.log”数据文件存储大量的消息，索引文件中的元数据指向对应数据文件中message的物理偏移地址。其中以“.index”索引文件中的元数据[3, 348]为例，在“.log”数据文件表示第3个消息，即在全局partition中表示170410+3=170413个消息，该消息的物理偏移地址为348。
-
-那么如何从partition中通过offset查找message呢?
-
-以上图为例，读取offset=170418的消息，首先查找segment文件，其中00000000000000000000.index为最开始的文件，第二个文件为00000000000000170410.index(起始偏移为170410+1=170411)，而第三个文件为00000000000000239430.index(起始偏移为239430+1=239431)，所以这个offset=170418就落到了第二个文件之中。其他后续文件可以依次类推，以其实偏移量命名并排列这些文件，然后根据二分查找法就可以快速定位到具体文件位置。其次根据00000000000000170410.index文件中的[8,1325]定位到00000000000000170410.log文件中的1325的位置进行读取。
-
-要是读取offset=170418的消息，从00000000000000170410.log文件中的1325的位置进行读取，那么怎么知道何时读完本条消息，否则就读到下一条消息的内容了?
+要怎么知道何时才算读完本条消息，否则就读到下一条消息的内容了?
 
 这个就需要联系到消息的物理结构了，消息都具有固定的物理结构，包括：offset(8 Bytes)、消息体的大小(4 Bytes)、crc32(4 Bytes)、magic(1 Byte)、attributes(1 Byte)、key length(4 Bytes)、key(K Bytes)、payload(N Bytes)等等字段，可以确定一条消息的大小，即读取到哪里截止。
 
