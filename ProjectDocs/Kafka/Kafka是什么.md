@@ -112,5 +112,5 @@ Kafka像其他Mq一样，也有自己的基础架构，主要存在生产者Prod
 
 9. Follower：每个分区多个副本的从角色，实时的从Leader中同步数据，保持和Leader数据的同步，Leader发生故障的时候，某个Follower会成为新的Leader。
 
-上述一个Topic会产生多个分区Partition，分区中分为Leader和Follower，消息一般发送到Leader，Follower通过数据的同步与Leader保持同步，消费的话也是在Leader中发生消费，如果多个消费者，则分别消费Leader和各个Follower中的消息，当Leader发生故障的时候，某个Follower会成为主节点，此时会对齐消息的偏移量。
+上述一个Topic会产生多个分区Partition，分区中分为Leader和Follower，消息一般发送到Leader，Follower通过数据的同步与Leader保持同步，消费的话也是在Leader中发生消费，如果有多个消费者，则分别消费Topic里各个Leader分区中的消息，当Leader发生故障的时候，某个Follower会成为主节点，此时会对齐消息的偏移量。
 
