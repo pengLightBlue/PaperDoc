@@ -1,106 +1,369 @@
-# 一文彻底搞懂大模型 - RAG（检索、增强、生成）
+## RAG
 
-![RAG](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNb2ZudmJlUTR3UzJ5N29Cc1gxdEVxbGdHS3NEamljYmRHRjVHaWNuTG9WTnBzRmtWZjBHczBvRVEvNjQwP3d4X2ZtdD1wbmcmYW1w;from=appmsg)
+RAG 检索增强生成（Retrieval Augmented Generation），已经成为当前最火热的LLM应用方案。
 
-**RAG（Retrieval-Augmented Generation，检索增强生成） 是一种结合了信息检索技术与语言生成模型的人工智能技术。*该技术通过从外部知识库中检索相关信息，并将其作为提示（Prompt）输入给大型语言模型（LLMs），以增强模型处理知识密集型任务的能力，如问答、文本摘要、内容生成等。RAG模型由Facebook AI Research（FAIR）团队于2020年首次提出，并迅速成为大模型应用中的热门方案。
+理解起来不难，就是通过自有垂域数据库检索相关信息，然后合并成为提示模板，给大模型润色生成回答。
 
-![](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNUlVuQ1pPdXB4eklpYWVyMEJSZ0M2TmljTzZPdll6M0dRTUJrWFBBQnRmb1ZNcFFPRTNHSGRpYUVRLzY0MD93eF9mbXQ9cG5nJmFtcA==;from=appmsg)
+但是当我们将大模型应用于实际业务场景时会发现，通用的基础大模型基本无法满足实际业务需求，主要有以下几方面原因：
 
-## 一、检索增强生成（RAG）
+- **知识的局限性**：模型自身的知识完全源于它的训练数据，而现有的主流大模型（deepseek、文心一言、通义千问…）的训练集基本都是构建于网络公开的数据，对于一些实时性的、非公开的或离线的数据是无法获取到的。
+- **幻觉问题**：所有的AI模型的底层原理都是基于数学概率，其模型输出实质上是一系列数值运算，大模型也不例外，所以它经常会一本正经地胡说八道，尤其是在大模型自身不具备某一方面的知识或不擅长的场景。
+- **数据安全性**：对于企业来说，数据安全至关重要，没有企业愿意承担数据泄露的风险，将自身的私域数据上传第三方平台进行训练。这也导致完全依赖通用大模型自身能力的应用方案不得不在数据安全和效果方面进行取舍。
 
-**什么是**RAG？RAG（Retrieval-Augmented Generation，检索增强生成），RAG**是一种 AI 框架，它将传统信息检索系统（例如数据库）的优势与生成式大语言模型 (LLM) 的功能结合在一起。**
+而RAG是解决上述问题的有效方案。
 
-LLM通过将这些额外的知识与自己的语言技能相结合，可以撰写更准确、更具时效性且更贴合具体需求的文字。
+一句话总结：
 
-![什么是RAG](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNdmw3OHhRd2NBVjRPSXlrdldSUXhUdFVJNWhIaFFYZFk0eDJDdnYxeVhpYk1yZ3JsVTAzOUFFdy82NDA/d3hfZm10PXBuZyZhbXA=;from=appmsg)
+> **RAG（中文为检索增强生成） = 检索技术 + LLM 提示**。
 
-如何理解RAG？通过上一个问题，我们知道了什么是RAG？了解到RAG是一种结合了信息检索、文本增强和文本生成的自然语言处理（NLP）的技术。
+例如，向 LLM 提问一个问题（qustion），RAG 从各种数据源检索相关的信息，并将检索到的信息和问题（answer）注入到 LLM 提示中，LLM 最后给出答案。
 
-RAG的目的是通过从外部知识库检索相关信息来辅助大语言模型生成更准确、更丰富的文本内容。那我们如何理解RAG的检索、增强和生成呢？
+许多产品基于 RAG 构建，从基于 web 搜索引擎和 LLM 的问答服务到使用私有数据的应用程序。
 
-1.  **检索**：检索是RAG流程的第一步，从预先建立的知识库中检索与问题相关的信息。这一步的目的是为后续的生成过程提供有用的上下文信息和知识支撑。
+早在2019年，Faiss 就实现了基于嵌入的向量搜索技术，现在 RAG 推动了**向量搜索**领域的发展。后来比如 chroma、http://weaviate.io 和 pinecone 这些基于开源搜索索引引擎（主要是 faiss 和 nmslib）向量数据库初创公司，增加了输入文本的额外存储和其他工具。
 
-2.  **增强**：RAG中增强是将检索到的信息用作生成模型（即大语言模型）的上下文输入，以增强模型对特定问题的理解和回答能力。这一步的目的是将外部知识融入生成过程中，使生成的文本内容更加丰富、准确和符合用户需求。**通过增强步骤，LLM模型能够充分利用外部知识库中的信息。**
+![img](https://pic3.zhimg.com/v2-c18bbf79b4f59411735255db5a90fbf6_1440w.webp?consumer=ZHI_MENG)
 
-3.  生成：生成是RAG流程的最后一步。这一步的目的是结合LLM生成符合用户需求的回答。生成器会利用检索到的信息作为上下文输入，并结合大语言模型来生成文本内容。
+在这个过程中，有两个主要步骤：语义搜索和生成输出。在语义搜索步骤中，从知识库中找到与要回答的查询最相关的部分内容。然后，在生成步骤中，将使用这些内容来生成响应。
 
-RAG的"检索、增强、生成"，谁增强了谁，谁生成了答案，主语很重要。是从知识库中检索到的问答对，增强了LLM的提示词（prompt），LLM拿着增强后的Prompt生成了问题答案。
+有两个最著名的基于 LLM 的管道和应用程序的开源库——LangChain 和 LlamaIndex。
 
-![如何理解RAG](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNSEkxTHd3TmJMd2VZakN2RlltaWI0OGNrM3FoaDN1bkRxSnVGN3g5aWJkQjVyOTNMWWRCU2xPcEEvNjQwP3d4X2ZtdD1wbmcmYW1w;from=appmsg)
+本文的目的是参考 LlamaIndex实现，来系统讲解高级 RAG 技术，以方便大家深入研究。
 
-**如何使用RAG？******了解了什么是RGA，同步也理解了RAG的检索、增强和生成。那我们如何使用RAG呢？接下来以RAG搭建知识问答系统具体步骤为例，来讲解如何使用RAG？****
+## RAG实现过程
 
-1.  **数据准备与知识库构建**：
+目前已经知道RAG融合是一种用于（可能）提升RAG应用检索阶段的技术。
 
--   **收集数据：**首先，需要收集与问答系统相关的各种数据，这些数据可以来自文档、网页、数据库等多种来源。
+下面这张图片展示了大概的工作流程。基本上，主要思路就是利用LLM来生成多个查询，期望能够通过这些查询让问题的各个方面在上下文中显现出来。之后你可以使用生成的查询进行向量搜索（如本系列之前的部分所述），并且基于其在结果集中的显示方式来对内容进行重新排序。
 
--   **数据清洗：**对收集到的数据进行清洗，去除噪声、重复项和无关信息，确保数据的质量和准确性。
+![img](https://pic3.zhimg.com/v2-6e8c30b661d0345dcb78c9fa3faf1316_1440w.webp?consumer=ZHI_MENG)
 
--   **知识库构建：**将清洗后的数据构建成知识库。这通常包括将文本分割成较小的片段（chunks），使用文本嵌入模型（如GLM）将这些片段转换成向量，并将这些向量存储在向量数据库（如FAISS、Milvus等）中。
+可以用下面提示词生成额外问题：
 
--   **检索模块设计：**
+```text
+You are a helpful assistant that generates multiple search queries based on a single input query.
 
--   **问题向量化：**当用户输入查询问题时，使用相同的文本嵌入模型将问题转换成向量。
+Generate multiple search queries related to: {USER_INPUT}
+OUTPUT (4 queries):
+```
 
--   **相似度检索：**在向量数据库中检索与问题向量最相似的知识库片段（chunks）。这通常通过计算向量之间的相似度（如余弦相似度）来实现。
+![img](https://pic4.zhimg.com/v2-3d46d6afc9fd4ad81e96fa5dd6f77b41_1440w.webp?consumer=ZHI_MENG)
 
--   **结果排序：**根据相似度得分对检索到的结果进行排序，选择最相关的片段作为后续生成的输入。
+如上所述，LLM能够生成覆盖原问题多个方面的查询。这样可以在数据库中找到包含各个相关方面的信息，从而潜在地提高从RAG应用得到的结果。
 
--   生成模块设计：
+## **RAG架构**
 
--   **上下文融合**：将检索到的相关片段与原始问题合并，形成更丰富的上下文信息。
+RAG的架构如图中所示，简单来讲，RAG就是通过检索获取相关的知识并将其融入Prompt，让大模型能够参考相应的知识从而给出合理回答。因此，可以将RAG的核心理解为“检索+生成”，前者主要是利用向量数据库的高效存储和检索能力，召回目标知识；后者则是利用大模型和Prompt工程，将召回的知识合理利用，生成目标答案。
 
--   **大语言模型生成**：使用大语言模型（如GLM）基于上述上下文信息生成回答。大语言模型会学习如何根据检索到的信息来生成准确、有用的回答。
+![img](https://pic4.zhimg.com/v2-3cbae4ea97b928fe7bd7b6a3071a0c6b_1440w.webp?consumer=ZHI_MENG)
 
-******大家可以结合自己的业务领域知识，开始搭建医疗、法律、产品知识问答。先搭建Demo，然后工作中不断完善知识库问答对。******
+RAG架构
 
-![如何使用RAG](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNem1RWkNsU0hLOUFSUXZpYmtXMW80dnI2am1Yd3E1M01VcFk3QW5oRTg2ZWZUZTBjYW50enM1dy82NDA/d3hfZm10PXBuZyZhbXA=;from=appmsg)
+完整的RAG应用流程主要包含两个阶段：
 
-## 二、RAG的原理、流程及架构
+- 数据准备阶段：数据提取——>文本分割——>向量化（embedding）——>数据入库
+- 应用阶段：用户提问——>数据检索（召回）——>注入Prompt——>LLM生成答案
 
-**RAG工作原理是什么？大型语言模型（LLM）面临两个问题，第一个问题是LLM会产生幻觉，第二个是LLM的知识中断。**
+下面详细介绍一下各环节的技术细节和注意事项：
 
-1.  知识截止：当 LLM 返回的信息与模型的训练数据相比过时时。每个基础模型都有知识截止，这意味着其知识仅限于训练时可用的数据。
+### **数据准备阶段**：
 
-2.  幻觉：当模型自信地做出错误反应时，就会发生幻觉。
+数据准备一般是一个离线的过程，主要是将私域数据向量化后构建索引并存入数据库的过程。主要包括：数据提取、文本分割、向量化、数据入库等环节。
 
-**检索增强生成 (RAG) 摆脱了知识限制，整合了外部数据，从外部知识库中检索相关信息，增强模型的生成能力。**
+![img](https://pic2.zhimg.com/v2-6c892fbaecd397ed9f5c15c1ce4dd491_1440w.webp?consumer=ZHI_MENG)
 
-![RAG工作原理是什么](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNaWFpYVdsa09wN0puaWNrSVpNZExpY1NYankyZmljYkRjU2t5TFZMTUgyajRiTGN0REpGZWZ1alRZbUEvNjQwP3d4X2ZtdD1wbmcmYW1w;from=appmsg)
+数据准备
 
-**RAG工作流程是什么？**通过检索增强技术，将用户查询与索引知识融合，利用大语言模型生成准确回答。
+- **数据提取**
 
-1.  知识准备：收集并转换知识文档为文本数据，进行预处理和索引。
+- - 数据加载：包括多格式数据加载、不同数据源获取等，根据数据自身情况，将数据处理为同一个范式。
+  - 数据处理：包括数据过滤、压缩、格式化等。
+  - 元数据获取：提取数据中关键信息，例如文件名、Title、时间等 。
 
-2.  嵌入与索引：使用嵌入模型将文本转换为向量，并存储在向量数据库中。
+- **文本分割**：
+  文本分割主要考虑两个因素：1）embedding模型的Tokens限制情况；2）语义完整性对整体的检索效果的影响。一些常见的文本分割方式如下：
 
-3.  查询检索：用户查询转换为向量，从数据库中检索相关知识。
+- - 句分割：以”句”的粒度进行切分，保留一个句子的完整语义。常见切分符包括：句号、感叹号、问号、换行符等。
+  - 固定长度分割：根据embedding模型的token长度限制，将文本分割为固定长度（例如256/512个tokens），这种切分方式会损失很多语义信息，一般通过在头尾增加一定冗余量来缓解。
 
-4.  提示增强：结合检索结果构建增强提示模版。
+- **向量化（embedding）**：
 
-5.  生成回答：大语言模型根据增强模版生成准确回答。
+向量化是一个将文本数据转化为向量矩阵的过程，该过程会直接影响到后续检索的效果。目前常见的embedding模型如表中所示，这些embedding模型基本能满足大部分需求，但对于特殊场景（例如涉及一些罕见专有词或字等）或者想进一步优化效果，则可以选择开源Embedding模型微调或直接训练适合自己场景的Embedding模型。
 
-![RAG工作流程是什么](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X2pwZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNa3lIZU9WU1ZkdnZiUDNvYmpuNWNwVHBINFJMaWEzMEZ2V044N3BKOXBBaWNpYW0yUUJqYnpyR21BLzY0MD93eF9mbXQ9anBlZw==)
+| 模型名称           | 描述                                                         | 获取地址                                                     |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ChatGPT-Embedding  | ChatGPT-Embedding由OpenAI公司提供，以接口形式调用。          | [https://platform.openai.com/docs/guides/embeddings/what-are-embeddings](https://link.zhihu.com/?target=https%3A//platform.openai.com/docs/guides/embeddings/what-are-embeddings) |
+| ERNIE-Embedding V1 | ERNIE-Embedding V1由百度公司提供，依赖于文心大模型能力，以接口形式调用。 | [https://cloud.baidu.com/doc/WENXINWORKSHOP/s/alj562vvu](https://link.zhihu.com/?target=https%3A//cloud.baidu.com/doc/WENXINWORKSHOP/s/alj562vvu) |
+| M3E                | M3E是一款功能强大的开源Embedding模型，包含m3e-small、m3e-base、m3e-large等多个版本，支持微调和本地部署。 | [https://huggingface.co/moka-ai/m3e-base](https://link.zhihu.com/?target=https%3A//huggingface.co/moka-ai/m3e-base) |
+| BGE                | BGE由北京智源人工智能研究院发布，同样是一款功能强大的开源Embedding模型，包含了支持中文和英文的多个版本，同样支持微调和本地部署。 | [https://huggingface.co/BAAI/bge-base-en-v1.5](https://link.zhihu.com/?target=https%3A//huggingface.co/BAAI/bge-base-en-v1.5) |
 
-RAG技术架构是什么？RAG技术架构主要由两个核心模块组成，检索模块（Retriever）和生成模块（Generator）。
+- 数据入库：
 
-1.  **检索模块（Retriever）：**
+数据向量化后构建索引，并写入数据库的过程可以概述为数据入库过程，适用于RAG场景的数据库包括：FAISS、Chromadb、ES、milvus等。一般可以根据业务场景、硬件、性能需求等多因素综合考虑，选择合适的数据库。
 
--   文本嵌入：使用预训练的文本嵌入模型（如GLM）将查询和文档转换成向量表示，以便在向量空间中进行相似度计算。
+### **应用阶段：**
 
--   向量搜索：利用高效的向量搜索技术（如FAISS、Milvus等向量数据库）在向量空间中检索与查询向量最相似的文档或段落。
+在应用阶段，可以根据用户的提问，通过高效的检索方法，召回与提问最相关的知识，并融入Prompt；大模型参考当前提问和相关知识，生成相应的答案。关键环节包括：数据检索、注入Prompt等。
 
--   双塔模型：检索模块常采用双塔模型（Dual-Encoder）进行高效的向量化检索。双塔模型由两个独立的编码器组成，一个用于编码查询，另一个用于编码文档。这两个编码器将查询和文档映射到相同的向量空间中，以便进行相似度计算。
+![img](https://pic2.zhimg.com/v2-416d1e47d8fe3525abaddb911bc1724b_1440w.webp?consumer=ZHI_MENG)
 
--   **生成模块（Generator）：**
+数据检索
 
--   强大的生成模型：生成模块通常使用在大规模数据上预训练的生成模型（如GLM），这些模型在生成自然语言文本方面表现出色。
+- **数据检索**
 
--   上下文融合：生成模块将检索到的相关文档与原始查询合并，形成更丰富的上下文信息，作为生成模型的输入。
+常见的数据检索方法包括：相似性检索、全文检索等，根据检索效果，一般可以选择多种检索方式融合，提升召回率。
 
--   生成过程：生成模型根据输入的上下文信息，生成连贯、准确且信息丰富的回答或文本。
+- - 相似性检索：即计算查询向量与所有存储向量的相似性得分，返回得分高的记录。常见的相似性计算方法包括：余弦相似性、欧氏距离、曼哈顿距离等。
+  - 全文检索：全文检索是一种比较经典的检索方式，在数据存入时，通过关键词构建倒排索引；在检索时，通过关键词进行全文检索，找到对应的记录。
 
-**结合高效的检索模块（**Retriever**）与强大的生成模型（**Generator**），实现基于外部知识增强的自然语言生成能力。**
+- **注入Prompt**
 
-![RAG技术架构是什么？](https://api.ibos.cn/v4/weapparticle/accesswximg?aid=88690&url=aHR0cHM6Ly9tbWJpei5xcGljLmNuL3N6X21tYml6X3BuZy83VFdSaGg0eGlja2trRUs4WVhjQ2lhUUlIMWRBandranlNOU9kUkM1aWFtbTZZYWljOU1mMDRhekhhSFBWM2pYbUVsSEtld0MxSzhOZWNtTjVzWXVxaWNnN2h3LzY0MD93eF9mbXQ9cG5nJmFtcA==;from=appmsg)
+![img](https://pic3.zhimg.com/v2-871e8f997df63aac703eaf2f84562c18_1440w.webp?consumer=ZHI_MENG)
 
+LLM生成
+
+Prompt作为大模型的直接输入，是影响模型输出准确率的关键因素之一。在RAG场景中，Prompt一般包括任务描述、背景知识（检索得到）、任务指令（一般是用户提问）等，根据任务场景和大模型性能，也可以在Prompt中适当加入其他指令优化大模型的输出。一个简单知识问答场景的Prompt如下所示：
+
+```text
+【任务描述】
+假如你是一个专业的客服机器人，请参考【背景知识】，回
+【背景知识】
+{content} // 数据检索得到的相关文本
+【问题】
+石头扫地机器人P10的续航时间是多久？
+```
+
+Prompt的设计只有方法、没有语法，比较依赖于个人经验，在实际应用过程中，往往需要根据大模型的实际输出进行针对性的Prompt调优。
+
+## 原始 RAG
+
+本文 RAG 管道从一个文本文档语料库开始，直接跳过如何通过数据加载器从Youtube等数据源获取步骤。
+
+![img](https://pic4.zhimg.com/v2-61bf8fb2721372e9f8be684953453aab_1440w.webp?consumer=ZHI_MENG)
+
+标准的 RAG 流程简介：将文本分块，然后使用一些 Transformer Encoder 模型将这些块嵌入到向量中，将所有向量放入索引中，最后创建一个 LLM 提示，告诉模型根据搜索步骤中找到的上下文回答用户的查询。
+
+在运行时，通过使用同一编码器模型对用户的查询进行向量化，然后搜索该查询向量的索引，找到 top-k 个结果，从数据库中检索相应的文本块，并将它们作为上下文输入到 LLM 提示中。
+
+提示与下边内容类似：
+
+```text
+def question_answering(context, query):
+    prompt = f"""
+                Give the answer to the user query delimited by triple backticks ```{query}```\
+                using the information given in context delimited by triple backticks ```{context}```.\
+                If there is no relevant information in the provided context, try to answer yourself, 
+                but tell user that you did not have any relevant context to base your answer on.
+                Be concise and output the answer of size less than 80 tokens.
+                """
+
+    response = get_completion(instruction, prompt, model="gpt-3.5-turbo")
+    answer = response.choices[0].message["content"]
+  return answer
+```
+
+提示工程是提升 RAG 流程性能的一种简便有效的方法。可以查阅 OpenAI 提供的详尽的提示工程指南。
+
+> 虽然 OpenAI 是 LLM 提供商的领头羊，但还有其他不少选择，例如deepseek，qwen， Anthropic 的 Claude，Mistral 的小型但功能强大的模型Mixtral，Microsoft 的Phi-2，以及如Llama2，OpenLLaMA，Falcon等众多开源模型，可以选择最合适的，作为 RAG 管道大脑。
+
+## 高级 RAG
+
+接下来深入讲解高级 RAG 技术。包括所涉及的核心步骤和算法的方案，但是省略了一些逻辑循环和复杂的多步代理行为，以保持方案的可读性。
+
+![img](https://picx.zhimg.com/v2-ec796da4012a702d088bf8bed4b1ae0d_1440w.webp?consumer=ZHI_MENG)
+
+上图中绿色部分是接下来详细探讨的核心 RAG 技术。一张图并不能全部展示所有的高级 RAG 技术，比如这里省略了上文扩展技术。
+
+### 1：分块 (Chunking) & 向量化 (Vectorisation)
+
+首先需要为文档内容创建向量索引，然后在运行时搜索与查询向量余弦距离最近的向量索引，这样就可以找到与查询内容最接近语义的文档。
+
+**1.1 分块 (Chunking)**
+
+Transformer 模型具有固定的输入序列长度，即使输入上下文窗口很大，一个句子或几个句子的向量也比几页文本的向量更能代表其语义含义，因此对数据进行分块—— 将初始文档拆分为一定大小的块，而不会失去其含义。有许多文本拆分器实现能够完成此任务。
+
+块的大小是一个需要重点考虑的问题。块的大小取决于所使用的嵌入模型以及模型需要使用 token 的容量。如基于 BERT 的句子转换器，最多需要 512 个 token，OpenAI ada-002 能够处理更长的序列，如 8191 个 token，但这里的折衷是 LLM 有足够的上下文来推理，而不是足够具体的文本嵌入，以便有效地执行搜索。有一项关于块大小选择的研究。在 LlamaIndex 中，NodeParser 类很好支持解决这个问题，其中包含一些高级选项，例如定义自己的文本拆分器、元数据、节点/块关系等。
+
+**1.2 向量化 (Vectorisation)**
+
+下一步是选择一个**搜索优化的模型来嵌入块**。有很多选项，比如 bge-large 或 E5 嵌入系列。只需查看 MTEB 排行榜以获取最新更新即可。
+
+有关分块和向量化步骤的 end2end 实现，请查看 LlamaIndex 中完整数据摄取管道的示例。
+
+### 2. 搜索索引
+
+**2.1 向量存储索引**
+
+![img](https://picx.zhimg.com/v2-da420744c1f8a8c036167a5f23c052cd_1440w.webp?consumer=ZHI_MENG)
+
+**RAG 管道的关键部分是搜索索引**，它存储了在上一步中获得的向量化内容。最原始的实现是使用平面索引 — 查询向量和所有块向量之间的暴力计算距离。
+
+**为了实现1w+元素规模的高效检索，搜索索引**应该采用**向量索引**，比如 faiss、nmslib 以及 annoy。这些工具基于近似最近邻居算法，如聚类、树结构或HNSW算法。
+
+此外，还有一些托管解决方案，如 OpenSearch、ElasticSearch 以及向量数据库，它们自动处理上面提到的数据摄取流程，例如Pinecone、Weaviate和Chroma。
+
+取决于索引选择、数据和搜索需求，还可以**存储元数据**，并使用**元数据过滤器**来按照日期或来源等条件进行信息检索。
+
+LlamaIndex 支持多种向量存储索引，同时也兼容其他简单的索引类型，如列表索引、树索引和关键词表索引。
+
+**2.2 分层索引**
+
+![img](https://pic3.zhimg.com/v2-2a1cd57c7e9dc3a4e96432658e198b04_1440w.webp?consumer=ZHI_MENG)
+
+在大型数据库的情况下，一个有效的方法是创建两个索引——一个由摘要组成，另一个由文档块组成，然后分两步进行搜索，首先通过摘要过滤掉相关文档，然后只在这个相关组内搜索。
+
+**2.3 假设性问题和 HyDE**
+
+另一种方法是让 **LLM 为每个块生成一个问题，并将这些问题嵌入到向量中**，在运行时对这个问题向量的索引执行查询搜索（将块向量替换为索引中的问题向量），然后在检索后路由到原始文本块并将它们作为 LLM 获取答案的上下文发送。
+
+这种方法提高了搜索质量，因为与实际块相比，**查询和假设问题之间的语义相似性更高**。
+
+还有一种叫做 HyDE 的反向逻辑方法——你要求 LLM 在给定查询的情况下生成一个假设的响应，然后将其向量与查询向量一起使用来提高搜索质量。
+
+**2.4 内容增强**
+
+这里的内容是将相关的上下文组合起来供 LLM 推理，以检索较小的块以获得更好的搜索质量。
+
+有两种选择：一种是围绕较小的检索块的句子扩展上下文，另一种是递归地将文档拆分为多个较大的父块，其中包含较小的子块。
+
+2.4.1 语句窗口检索器
+
+在此方案中，文档中的每个句子都是单独嵌入的，这为上下文余弦距离搜索提供了极大的查询准确性。
+
+为了在获取最相关的单个句子后更好地推理找到的上下文，将上下文窗口扩展为检索到的句子前后的 k 个句子，然后将这个扩展的上下文发送到 LLM。
+
+![img](https://picx.zhimg.com/v2-f20758c9c6f233c776aaea621dd25dab_1440w.webp?consumer=ZHI_MENG)
+
+绿色部分是在索引中搜索时发现的句子嵌入，整个黑色 + 绿色段落被送到 LLM 以扩大其上下文，同时根据提供的查询进行推理。
+
+2.4.2 自动合并检索器（或父文档检索器)
+
+这里的思路与语句窗口检索器非常相似——搜索更精细的信息片段，然后在在LLM 进行推理之前扩展上下文窗口。文档被拆分为较小的子块，这些子块和较大的父块有引用关系。
+
+![img](https://pica.zhimg.com/v2-faebe20c9e474e5aa2a5f00fd53572ec_1440w.webp?consumer=ZHI_MENG)
+
+首先在检索过程中获取较小的块，然后如果前 k 个检索到的块中有超过 n 个块链接到同一个父节点（较大的块），将这个父节点替换成给 LLM 的上下文——工作原理类似于自动将一些检索到的块合并到一个更大的父块中，因此得名。请注意，搜索仅在子节点索引中执行。
+
+**2.5 融合检索或混合搜索**
+
+这是一个很早以前的思路：结合传统的基于关键字的搜索（稀疏检索算法，如 tf-idf 或搜索行业标准 BM25）和现代语义或向量搜索，并将其结果组合在一个检索结果中。
+
+这里唯一的关键是如何组合不同相似度分数的检索结果。这个问题通常通过 Reciprocal Rank Fusion 算法来解决，该算法能有效地对检索结果进行重新排序，以得到最终的输出结果。
+
+![img](https://picx.zhimg.com/v2-8e39fb64aa1d1761d9ac8eaabdc3cf05_1440w.webp?consumer=ZHI_MENG)
+
+在 LangChain 中，这种方法是通过 Ensemble Retriever 来实现的，该类将你定义的多个检索器结合起来，比如一个基于 faiss 的向量索引和一个基于 BM25 的检索器，并利用 RRF 算法进行结果的重排。
+
+在 LlamaIndex 中，这一过程也是以类似的方式 实现 的。
+
+混合或融合搜索通常能提供更优秀的检索结果，因为它结合了两种互补的搜索算法——既考虑了查询和存储文档之间的语义相似性，也考虑了关键词匹配。
+
+### 3. 重排（reranking）和过滤（filtering）
+
+使用上述任何算法获得了检索结果，现在是时候通过过滤、重排或一些转换来完善它们了。在 LlamaIndex 中，有各种可用的后处理器，根据相似性分数、关键字、元数据过滤掉结果，或使用其他模型（如 LLM）、sentence-transformer 交叉编码器，Cohere 重新排名接口或者基于元数据重排它们。
+
+这是将检索到的上下文提供给 LLM 以获得结果答案之前的最后一步。
+
+------
+
+现在，将讨论更高级的 RAG 技术，比如查询转换和路由。这些技术涉及到大语言模型的使用，代表了一种更复杂的逻辑思维——在 RAG 流程中融合了 LLM 的推理能力。
+
+### 4. 查询转换
+
+查询转换是一系列技术，使用 LLM 作为推理引擎来修改用户输入以提高检索质量。有很多技术实现可供选择。
+
+![img](https://pic2.zhimg.com/v2-95f3a817f510aa57d6f1ca2971ebe84f_1440w.webp?consumer=ZHI_MENG)
+
+**对于复杂的查询，大语言模型能够将其拆分为多个子查询。**比如，
+
+- 当你问：“在 Github 上，Langchain 和 LlamaIndex 这两个框架哪个更受欢迎？”，
+
+一般不太可能直接在语料库找到它们的比较，所以将这个问题分解为两个更简单、具体的合理的子查询：
+
+- “Langchain 在 Github 上有多少星？”
+- “Llamaindex 在 Github 上有多少星？”
+
+这些子查询会并行执行，检索到的信息随后被汇总到一个 LLM 提示词中。这两个功能分别在 Langchain 中以多查询检索器的形式和在 Llamaindex 中以子问题查询引擎的形式实现。
+
+1. Step-back prompting 使用 LLM 生成一个更通用的查询，以此检索到更通用或高层次的上下文，用于为原始查询提供答案。同时执行原始查询的检索，并在最终答案生成步骤中将两个上下文发送到 LLM。这是 LangChain 的一个示例实现。
+2. **查询重写使用 LLM 来重新表述初始查询**，以改进检索。LangChain 和 LlamaIndex 都有实现，个人感觉LlamaIndex 解决方案在这里更强大。
+
+### 5. 聊天引擎
+
+关于构建一个可以多次用于单个查询的完美 RAG 系统的下一件工作是**聊天逻辑**，就像在 LLM 之前时代的经典聊天机器人中一样**考虑到对话上下文**。
+
+这是支持后续问题、代词指代或与上一个对话上下文相关的任意用户命令所必需的。它是通过查询压缩技术解决的，将聊天上下文与用户查询一起考虑在内。
+
+与往常一样，有几种方法可以进行上述上下文压缩——一个流行且相对简单的 ContextChatEngine，首先检索与用户查询相关的上下文，然后将其与内存缓冲区中的聊天记录一起发送到 LLM，以便 LLM 在生成下一个答案时了解上一个上下文。
+
+更复杂的情况是 CondensePlusContextMode——在每次交互中，聊天记录和最后一条消息被压缩到一个新的查询中，然后这个查询进入索引，检索到的上下文与原始用户消息一起传递给 LLM 以生成答案。
+
+需要注意的是，LlamaIndex 中还支持基于 OpenAI 智能体的聊天引擎，提供更灵活的聊天模式，Langchain 还支持 OpenAI 功能 API。
+
+![img](https://picx.zhimg.com/v2-331ccc95df0756e5b2e110ab3391d8c1_1440w.webp?consumer=ZHI_MENG)
+
+还有像 ReAct 智能体 这样的其他聊天引擎类型，但接下来将直接跳转到第 7 节，讨论智能体本身。
+
+### 6. 查询路由
+
+**查询路由是 LLM 驱动的决策步骤，决定在给定用户查询的情况下下一步该做什么**——选项通常是总结、对某些数据索引执行搜索或尝试许多不同的路由，然后将它们的输出综合到一个答案中。
+
+查询路由器还用于选择数据存储位置来处理用户查询。这些数据存储位置可能是多样的，比如传统的向量存储、图形数据库或关系型数据库，或者是不同层级的索引系统。在处理多文档存储时，通常会用到摘要索引和文档块向量索引这两种不同的索引。
+
+**定义查询路由器包括设置它可以做出的选择。**
+
+选择特定路由的过程是通过大语言模型调用来实现的，其结果按照预定义的格式返回，以路由查询指定的索引。如果是涉及到关联操作，这些查询还可能被发送到子链或其他智能体，如下面的**多文档智能体方案**所展示的那样。
+
+LlamaIndex 和 LangChain 都提供了对查询路由器的支持。
+
+### 7. 智能体（Agent）
+
+智能体（ Langchain 和 LlamaIndex 均支持）几乎从第一个 LLM API 发布开始就已经存在——这个思路是为一个具备推理能力的 LLM 提供一套工具和一个要完成的任务。这些工具可能包括一些确定性功能，如任何代码函数或外部 API，甚至是其他智能体——这种 LLM 链接思想是 LangChain 得名的地方。
+
+智能体本身就是一个复杂的技术，不可能在 RAG 概述中深入探讨该主题，所以我将继续基于 agent 的多文档检索案例，并简要提及 OpenAI 助手，因为它是一个相对较新的概念，在最近的 OpenAI 开发者大会上作为 GPTs 呈现，并在下文将要介绍的 RAG 系统中发挥作用。
+
+OpenAI 助手基本上整合了开源 LLM 周边工具——聊天记录、知识存储、文档上传界面。最重要的是函数调用 API， 其提供了将自然语言转换为对外部工具或数据库查询的 API 调用的功能。
+
+在 LlamaIndex 中，有一个 OpenAIAgent 类将这种高级逻辑与 ChatEngine 和 QueryEngine 类结合在一起，提供基于知识和上下文感知的聊天，以及在一个对话轮次中调用多个 OpenAI 函数的能力，这真正实现了智能代理行为。
+
+来看一下多文档**智能体**的**方案**—— 这是一个非常复杂的配置，涉及到在每个文档上初始化一个Agent（OpenAIAgent），该智能体能进行文档摘要制作和传统问答机制的操作，**还有一个顶层智能体**，负责将查询分配到各个文档智能体，并综合形成最终的答案。
+
+每个文档智能体都有两个工具：向量存储索引和摘要索引，它根据路由查询决定使用哪一个。对于顶级智能体来说，所有文档智能体都是其工具。
+
+该方案展示了一种高级 RAG 架构，其中每个智能体都做路由许多决策。这种方法的好处是能够比较不同的解决方案或实体在不同的文档及其摘要中描述，以及经典的单个文档摘要和 QA 机制——这基本上涵盖了最常见的与文档集合聊天的用例。
+
+![img](https://picx.zhimg.com/v2-a1b7e37ffb1190e3166b8ac9e03ea005_1440w.webp?consumer=ZHI_MENG)
+
+这种复杂配置的缺点可以通过图片发现 —— 由于需要在智能体内部的大语言模型之间进行多次往返迭代，其运行速度较慢。顺便一提，LLM 调用通常是 RAG 管道中耗时最长的操作，而搜索则是出于设计考虑而优化了速度。因此，对于大型的多文档存储，我建议考虑对此方案进行简化，以便实现扩展。
+
+### 8. 响应合成
+
+这是任何 RAG 管道的最后一步——根据检索的所有上下文和初始用户查询生成答案。
+
+最简单的方法是将所有获取的上下文（高于某个相关性阈值）与查询一起连接并提供给 LLM。但是，与往常一样，还有其他更复杂的选项，涉及多个 LLM 调用，以优化检索到的上下文并生成更好的答案。
+
+响应合成的主要方法有：
+
+- 通过将检索到的上下文逐块发送到 LLM 来优化答案
+- 概括检索到的上下文，以适应提示
+- 根据不同的上下文块生成多个答案，然后将它们连接或概括起来。
+
+## RAG 融合
+
+和其他软件世界的架构决策一样，RAG融合也有权衡取舍，你需要清楚它们，以便为具体情境做出最好的决定。不过首先，看一下RAG融合的优缺点。
+
+### 优点：
+
+- 提供多样化的上下文：因为你可以从不同的角度查看用户的查询，所以顶级结果里会出现更多样化的内容片段。与专注于单一视角的内容段落相比，你更有可能看到能够涵盖话题多个方面的内容作为顶级结果出现。
+- 额外的控制层面：像其他机器学习解决方案一样，RAG融合提供了额外的控制手柄，让你可以微调你的应用，并让它更加符合你的期望目标。
+- 自动校正：通过使用LLM作为用户在文本框中输入内容与实际在数据库中搜索内容之间的中间人，你可以纠正拼写错误，添加与用户查询相关的上下文信息（关于用户的信息、时间、他们的账户状态等），以及/或潜在地筛选特定类型的内容。
+- 成本：这是一个有些争议的问题，因为成本既是RAG融合的优点也是缺点，让我来解释一下。你大概知道，向量搜索比LLMs要便宜得多，那么用于RAG融合的额外LLM调用是不是应该会增加应用的整体成本呢？不过……让再来看看LLM的成本。你大概也知道，你可能使用的大多数主流LLMs都采用基于token的计费模式。即使是自己托管LLM，你的成本也会与处理的token数量大致成正比。基本上在这儿向LLM发送两次请求，一次大概有100个token用来生成相似的查询，另一次则会有数千个token，提供相关文本块并希望从LLM那里得到适当的回应。所以基本上第一次对LLM的调用要比第二次便宜10倍到100倍。所以即使RAG融合每10次查询节省一次后续问题，你在成本上还是能领先的。
+
+### 缺点：
+
+- 延迟:正如你现在可能知道的，LLMs需要大量的计算资源，因此它们的速度相对较慢(相对于应用程序中的其他部分)。根据你的应用程序，向LLM发送一次额外的请求可能会让用户的体验变得糟糕，因为他们可能需要等待几百毫秒的时间。
+- 自动纠错:是的，这是一个优点，但是当它不起作用时，也可能是一个缺点。这通常发生在你的内容包含内部术语或行话，而这些术语或行话没有出现在LLM学习过的数据中。在这种情况下，LLM可能会出现困惑并生成完全无关的查询，从而影响到最后的结果。
+
+### 适用场景
+
+* 如果您拥有的内容包含大量内部行话或与知名品牌重复的词语，则您可能需要调整RAG融合提示以获得良好的效果，或者最好避免使用
