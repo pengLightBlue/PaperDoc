@@ -161,6 +161,7 @@
   * [Trie树:如何实现搜索引擎的搜索关键词提示功能？](/ProjectDocs/algorithm/Trie树：如何实现搜索引擎的搜索关键词提示功能？.md)  
   * [洗牌算法](ProjectDocs/algorithm/洗牌算法.md)
   * [如何高效解决接雨水问题](ProjectDocs/algorithm/如何高效解决接雨水问题.md)
+  * [数学题](ProjectDocs/algorithm/数学题.md)
 * Prometheus
   * [彻底理解Prometheus查询语法](/ProjectDocs/prometheus/彻底理解Prometheus查询语法.md)    
 * Ai
